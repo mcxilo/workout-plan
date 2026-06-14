@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0F0F12" />
+  <title>Gym Plan · Weekly Split</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; background: #0F0F12; }
+    #root { max-width: 480px; margin: 0 auto; }
+    button { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+const { useState, useEffect } = React;
+
+const workouts = {
+  A: {
+    label: "Day A",
+    focus: "Lower Body",
+    color: "#C084FC",
+    accent: "#F3E8FF",
+    days: "Mon / Tue",
+    exercises: [
+      {
+        name: "Leg Press",
+        sets: "3 sets × 12 reps",
+        rest: "60s rest",
+        tip: "Feet shoulder-width, push through heels. Don't lock knees at top.",
+        machine: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="55" width="35" height="12" rx="4" fill="#C084FC" opacity="0.3"/>
+            <rect x="8" y="30" width="12" height="30" rx="4" fill="#C084FC" opacity="0.3"/>
+            <rect x="70" y="25" width="40" height="8" rx="3" fill="#C084FC" opacity="0.5"/>
+            <line x1="45" y1="60" x2="75" y2="35" stroke="#C084FC" strokeWidth="3" strokeLinecap="round"/>
+            <rect x="18" y="35" width="14" height="22" rx="4" fill="#7C3AED"/>
+            <circle cx="25" cy="28" r="8" fill="#7C3AED"/>
+            <line x1="32" y1="52" x2="55" y2="42" stroke="#7C3AED" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="55" y1="42" x2="72" y2="30" stroke="#7C3AED" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="68" y="27" width="10" height="6" rx="2" fill="#7C3AED"/>
+            <line x1="18" y1="42" x2="10" y2="50" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="32" y1="42" x2="38" y2="50" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Romanian Deadlift",
+        sets: "3 sets × 10 reps",
+        rest: "90s rest",
+        tip: "Hinge at hips, keep back flat. Feel the stretch in your hamstrings.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="70" width="80" height="6" rx="3" fill="#C084FC" opacity="0.5"/>
+            <rect x="15" y="66" width="10" height="14" rx="3" fill="#C084FC" opacity="0.7"/>
+            <rect x="95" y="66" width="10" height="14" rx="3" fill="#C084FC" opacity="0.7"/>
+            <circle cx="85" cy="30" r="8" fill="#7C3AED"/>
+            <line x1="80" y1="36" x2="45" y2="58" stroke="#7C3AED" strokeWidth="8" strokeLinecap="round"/>
+            <line x1="52" y1="62" x2="52" y2="90" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="60" y1="62" x2="60" y2="90" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="45" y="87" width="13" height="5" rx="2" fill="#7C3AED"/>
+            <rect x="53" y="87" width="13" height="5" rx="2" fill="#7C3AED"/>
+            <line x1="55" y1="52" x2="50" y2="70" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="45" y1="58" x2="40" y2="70" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Goblet Squat",
+        sets: "3 sets × 12 reps",
+        rest: "60s rest",
+        tip: "Hold dumbbell at chest, squat deep, keep chest up and knees out.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="50" y="38" width="20" height="8" rx="2" fill="#C084FC" opacity="0.6"/>
+            <rect x="47" y="36" width="6" height="12" rx="2" fill="#C084FC" opacity="0.8"/>
+            <rect x="67" y="36" width="6" height="12" rx="2" fill="#C084FC" opacity="0.8"/>
+            <circle cx="60" cy="20" r="8" fill="#7C3AED"/>
+            <rect x="52" y="28" width="16" height="18" rx="4" fill="#7C3AED"/>
+            <line x1="52" y1="35" x2="50" y2="44" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="68" y1="35" x2="70" y2="44" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="55" y1="46" x2="40" y2="70" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="65" y1="46" x2="80" y2="70" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="40" y1="70" x2="38" y2="92" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="80" y1="70" x2="82" y2="92" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="30" y="89" width="14" height="5" rx="2" fill="#7C3AED"/>
+            <rect x="76" y="89" width="14" height="5" rx="2" fill="#7C3AED"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Hip Thrust",
+        sets: "3 sets × 15 reps",
+        rest: "60s rest",
+        tip: "Upper back on bench, squeeze glutes at the top. Great for glutes.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="50" width="45" height="12" rx="4" fill="#C084FC" opacity="0.3"/>
+            <rect x="55" y="42" width="30" height="10" rx="3" fill="#C084FC" opacity="0.5"/>
+            <circle cx="18" cy="38" r="8" fill="#7C3AED"/>
+            <rect x="22" y="46" width="20" height="10" rx="3" fill="#7C3AED"/>
+            <line x1="42" y1="51" x2="65" y2="44" stroke="#7C3AED" strokeWidth="8" strokeLinecap="round"/>
+            <line x1="65" y1="50" x2="75" y2="75" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="72" y1="50" x2="82" y2="75" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="68" y="73" width="14" height="6" rx="2" fill="#7C3AED"/>
+            <rect x="76" y="73" width="14" height="6" rx="2" fill="#7C3AED"/>
+            <line x1="25" y1="50" x2="15" y2="60" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Leg Curl Machine",
+        sets: "3 sets × 12 reps",
+        rest: "60s rest",
+        tip: "Curl heels toward glutes. Squeeze at the top, lower slowly.",
+        machine: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="65" width="100" height="8" rx="3" fill="#C084FC" opacity="0.3"/>
+            <rect x="75" y="55" width="20" height="10" rx="3" fill="#C084FC" opacity="0.5"/>
+            <circle cx="20" cy="52" r="7" fill="#7C3AED"/>
+            <rect x="25" y="47" width="35" height="12" rx="4" fill="#7C3AED"/>
+            <line x1="60" y1="53" x2="80" y2="53" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="80" y1="53" x2="78" y2="35" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <circle cx="78" cy="35" r="5" fill="#7C3AED"/>
+            <line x1="28" y1="50" x2="15" y2="60" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Standing Calf Raise",
+        sets: "3 sets × 15 reps",
+        rest: "45s rest",
+        tip: "Rise up on toes slowly, hold 1 second, lower with control.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="85" y="10" width="8" height="80" rx="2" fill="#C084FC" opacity="0.2"/>
+            <rect x="30" y="82" width="50" height="8" rx="3" fill="#C084FC" opacity="0.4"/>
+            <circle cx="60" cy="18" r="8" fill="#7C3AED"/>
+            <rect x="52" y="26" width="16" height="25" rx="4" fill="#7C3AED"/>
+            <line x1="68" y1="32" x2="83" y2="38" stroke="#7C3AED" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="55" y1="51" x2="50" y2="75" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="65" y1="51" x2="70" y2="75" stroke="#7C3AED" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="50" y1="75" x2="45" y2="82" stroke="#7C3AED" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="70" y1="75" x2="75" y2="82" stroke="#7C3AED" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="38" y="80" width="10" height="4" rx="2" fill="#7C3AED"/>
+            <rect x="72" y="80" width="10" height="4" rx="2" fill="#7C3AED"/>
+          </svg>
+        ),
+      },
+    ],
+  },
+  B: {
+    label: "Day B",
+    focus: "Upper Body",
+    color: "#F472B6",
+    accent: "#FDF2F8",
+    days: "Wed / Thu",
+    exercises: [
+      {
+        name: "Seated Cable Row",
+        sets: "3 sets × 12 reps",
+        rest: "60s rest",
+        tip: "Pull to lower chest, squeeze shoulder blades together. Don't round your back.",
+        machine: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="95" y="20" width="15" height="60" rx="3" fill="#F472B6" opacity="0.3"/>
+            <circle cx="102" cy="40" r="8" fill="#F472B6" opacity="0.4"/>
+            <line x1="94" y1="40" x2="65" y2="52" stroke="#F472B6" strokeWidth="2" strokeDasharray="4,2"/>
+            <rect x="60" y="49" width="8" height="6" rx="2" fill="#F472B6" opacity="0.7"/>
+            <rect x="10" y="65" width="30" height="8" rx="3" fill="#F472B6" opacity="0.2"/>
+            <rect x="40" y="73" width="25" height="5" rx="2" fill="#F472B6" opacity="0.2"/>
+            <circle cx="30" cy="35" r="8" fill="#DB2777"/>
+            <rect x="22" y="43" width="16" height="22" rx="4" fill="#DB2777"/>
+            <line x1="38" y1="50" x2="60" y2="52" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="22" y1="50" x2="10" y2="55" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="25" y1="65" x2="25" y2="82" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="35" y1="65" x2="45" y2="78" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="38" y="76" width="12" height="5" rx="2" fill="#DB2777"/>
+            <rect x="18" y="80" width="12" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Lat Pulldown",
+        sets: "3 sets × 12 reps",
+        rest: "60s rest",
+        tip: "Pull bar to upper chest, lean back slightly. Control the way up.",
+        machine: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="8" width="80" height="6" rx="3" fill="#F472B6" opacity="0.4"/>
+            <line x1="60" y1="14" x2="60" y2="32" stroke="#F472B6" strokeWidth="2" strokeDasharray="3,2"/>
+            <rect x="30" y="30" width="60" height="6" rx="3" fill="#F472B6" opacity="0.6"/>
+            <rect x="40" y="75" width="40" height="8" rx="3" fill="#F472B6" opacity="0.2"/>
+            <rect x="38" y="65" width="44" height="8" rx="3" fill="#F472B6" opacity="0.15"/>
+            <circle cx="60" cy="28" r="7" fill="#DB2777"/>
+            <rect x="53" y="35" width="14" height="22" rx="4" fill="#DB2777"/>
+            <line x1="53" y1="38" x2="35" y2="32" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="67" y1="38" x2="85" y2="32" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="56" y1="57" x2="50" y2="75" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="64" y1="57" x2="70" y2="75" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="43" y="73" width="12" height="5" rx="2" fill="#DB2777"/>
+            <rect x="65" y="73" width="12" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Dumbbell Shoulder Press",
+        sets: "3 sets × 10 reps",
+        rest: "60s rest",
+        tip: "Press straight up, don't arch your lower back. Core tight throughout.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="18" y="28" width="16" height="6" rx="2" fill="#F472B6" opacity="0.6"/>
+            <rect x="15" y="25" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="34" y="25" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="86" y="28" width="16" height="6" rx="2" fill="#F472B6" opacity="0.6"/>
+            <rect x="83" y="25" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="101" y="25" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="35" y="72" width="50" height="10" rx="4" fill="#F472B6" opacity="0.2"/>
+            <circle cx="60" cy="28" r="8" fill="#DB2777"/>
+            <rect x="52" y="36" width="16" height="28" rx="4" fill="#DB2777"/>
+            <line x1="52" y1="42" x2="34" y2="30" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="68" y1="42" x2="86" y2="30" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="55" y1="64" x2="45" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="65" y1="64" x2="75" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="38" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+            <rect x="69" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Dumbbell Chest Press",
+        sets: "3 sets × 12 reps",
+        rest: "60s rest",
+        tip: "Lower dumbbells to chest level, press up and slightly inward. Keep feet flat.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="52" width="70" height="10" rx="4" fill="#F472B6" opacity="0.2"/>
+            <rect x="10" y="38" width="16" height="6" rx="2" fill="#F472B6" opacity="0.6"/>
+            <rect x="7" y="35" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="26" y="35" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="94" y="38" width="16" height="6" rx="2" fill="#F472B6" opacity="0.6"/>
+            <rect x="91" y="35" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="109" y="35" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <circle cx="60" cy="38" r="7" fill="#DB2777"/>
+            <rect x="30" y="44" width="60" height="12" rx="4" fill="#DB2777"/>
+            <line x1="35" y1="48" x2="15" y2="40" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="85" y1="48" x2="105" y2="40" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="45" y1="56" x2="38" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="75" y1="56" x2="82" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="30" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+            <rect x="76" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Tricep Pushdown",
+        sets: "3 sets × 12 reps",
+        rest: "45s rest",
+        tip: "Keep elbows tucked at sides, push down and fully extend. Slow and controlled.",
+        machine: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="90" y="5" width="20" height="70" rx="3" fill="#F472B6" opacity="0.2"/>
+            <circle cx="100" cy="20" r="7" fill="#F472B6" opacity="0.3"/>
+            <line x1="90" y1="20" x2="68" y2="38" stroke="#F472B6" strokeWidth="2" strokeDasharray="3,2"/>
+            <rect x="55" y="55" width="26" height="5" rx="2" fill="#F472B6" opacity="0.7"/>
+            <circle cx="55" cy="22" r="8" fill="#DB2777"/>
+            <rect x="47" y="30" width="16" height="25" rx="4" fill="#DB2777"/>
+            <line x1="50" y1="35" x2="50" y2="52" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="63" y1="35" x2="63" y2="52" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="50" y1="52" x2="55" y2="58" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="63" y1="52" x2="68" y2="58" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="50" y1="55" x2="45" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="63" y1="55" x2="68" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="37" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+            <rect x="62" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Dumbbell Bicep Curl",
+        sets: "3 sets × 12 reps",
+        rest: "45s rest",
+        tip: "Keep elbows at sides, curl up squeezing bicep. Lower slowly — that counts too.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="22" y="48" width="14" height="6" rx="2" fill="#F472B6" opacity="0.6"/>
+            <rect x="19" y="45" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="36" y="45" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="84" y="30" width="14" height="6" rx="2" fill="#F472B6" opacity="0.6"/>
+            <rect x="81" y="27" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <rect x="95" y="27" width="5" height="12" rx="2" fill="#F472B6" opacity="0.8"/>
+            <circle cx="60" cy="18" r="8" fill="#DB2777"/>
+            <rect x="52" y="26" width="16" height="28" rx="4" fill="#DB2777"/>
+            <line x1="52" y1="32" x2="36" y2="44" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="36" y1="44" x2="29" y2="52" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="68" y1="32" x2="80" y2="38" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="80" y1="38" x2="88" y2="30" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="55" y1="54" x2="50" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="65" y1="54" x2="70" y2="80" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="43" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+            <rect x="64" y="78" width="13" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Dead Hang",
+        sets: "3 sets × 20–30 sec",
+        rest: "45s rest",
+        tip: "Hang from bar with straight arms, shoulders pulled down away from ears. Builds grip and shoulder stability — the foundation of pull ups.",
+        machine: false,
+        pullup: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="12" width="100" height="7" rx="3" fill="#F472B6" opacity="0.6"/>
+            <rect x="15" y="5" width="6" height="14" rx="2" fill="#F472B6" opacity="0.3"/>
+            <rect x="99" y="5" width="6" height="14" rx="2" fill="#F472B6" opacity="0.3"/>
+            <circle cx="60" cy="38" r="8" fill="#DB2777"/>
+            <line x1="52" y1="34" x2="42" y2="18" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="68" y1="34" x2="78" y2="18" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <circle cx="42" cy="16" r="4" fill="#DB2777"/>
+            <circle cx="78" cy="16" r="4" fill="#DB2777"/>
+            <rect x="52" y="46" width="16" height="24" rx="4" fill="#DB2777"/>
+            <line x1="55" y1="70" x2="52" y2="92" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="65" y1="70" x2="68" y2="92" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="45" y="89" width="12" height="5" rx="2" fill="#DB2777"/>
+            <rect x="62" y="89" width="12" height="5" rx="2" fill="#DB2777"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Negative Pull Up",
+        sets: "3 sets × 3–5 reps",
+        rest: "60s rest",
+        tip: "Jump or step to top position with chin over bar. Lower yourself as slowly as possible — aim for 5–8 seconds down. This builds pull up strength faster than anything else.",
+        machine: false,
+        pullup: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="12" width="100" height="7" rx="3" fill="#F472B6" opacity="0.6"/>
+            <rect x="15" y="5" width="6" height="14" rx="2" fill="#F472B6" opacity="0.3"/>
+            <rect x="99" y="5" width="6" height="14" rx="2" fill="#F472B6" opacity="0.3"/>
+            <circle cx="38" cy="16" r="4" fill="#DB2777"/>
+            <circle cx="82" cy="16" r="4" fill="#DB2777"/>
+            <line x1="38" y1="16" x2="45" y2="26" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="82" y1="16" x2="75" y2="26" stroke="#DB2777" strokeWidth="4" strokeLinecap="round"/>
+            <circle cx="60" cy="10" r="7" fill="#DB2777"/>
+            <rect x="52" y="26" width="16" height="22" rx="4" fill="#DB2777"/>
+            <line x1="55" y1="48" x2="50" y2="72" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="65" y1="48" x2="70" y2="72" stroke="#DB2777" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="43" y="70" width="12" height="5" rx="2" fill="#DB2777"/>
+            <rect x="64" y="70" width="12" height="5" rx="2" fill="#DB2777"/>
+            <line x1="100" y1="20" x2="100" y2="70" stroke="#F472B6" strokeWidth="2" strokeDasharray="3,2" opacity="0.6"/>
+            <text x="94" y="78" fill="#F472B6" fontSize="10" opacity="0.8">↓ slow</text>
+          </svg>
+        ),
+      },
+    ],
+  },
+  C: {
+    label: "Day C",
+    focus: "Full Body",
+    color: "#34D399",
+    accent: "#ECFDF5",
+    days: "Fri / Sat",
+    exercises: [
+      {
+        name: "Dumbbell Lunge",
+        sets: "3 sets × 10 each leg",
+        rest: "60s rest",
+        tip: "Step forward, lower back knee toward floor. Keep chest tall, don't let front knee pass toes.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="12" y="48" width="12" height="5" rx="2" fill="#34D399" opacity="0.6"/>
+            <rect x="10" y="45" width="4" height="11" rx="2" fill="#34D399" opacity="0.8"/>
+            <rect x="24" y="45" width="4" height="11" rx="2" fill="#34D399" opacity="0.8"/>
+            <rect x="96" y="48" width="12" height="5" rx="2" fill="#34D399" opacity="0.6"/>
+            <rect x="94" y="45" width="4" height="11" rx="2" fill="#34D399" opacity="0.8"/>
+            <rect x="108" y="45" width="4" height="11" rx="2" fill="#34D399" opacity="0.8"/>
+            <circle cx="60" cy="18" r="8" fill="#059669"/>
+            <rect x="52" y="26" width="16" height="22" rx="4" fill="#059669"/>
+            <line x1="52" y1="35" x2="26" y2="50" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="68" y1="35" x2="98" y2="50" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="62" y1="48" x2="75" y2="65" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="75" y1="65" x2="80" y2="88" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="58" y1="48" x2="45" y2="65" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="45" y1="65" x2="42" y2="88" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="73" y="85" width="13" height="5" rx="2" fill="#059669"/>
+            <rect x="35" y="85" width="10" height="5" rx="2" fill="#059669"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Plank",
+        sets: "3 sets × 30–45 sec",
+        rest: "45s rest",
+        tip: "Body in straight line from head to heels. Don't let hips sag or pike up.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="78" width="110" height="4" rx="2" fill="#34D399" opacity="0.2"/>
+            <circle cx="20" cy="55" r="7" fill="#059669"/>
+            <rect x="25" y="50" width="65" height="12" rx="4" fill="#059669"/>
+            <rect x="20" y="62" width="15" height="5" rx="2" fill="#059669"/>
+            <rect x="38" y="62" width="15" height="5" rx="2" fill="#059669"/>
+            <line x1="88" y1="56" x2="105" y2="62" stroke="#059669" strokeWidth="7" strokeLinecap="round"/>
+            <rect x="100" y="62" width="12" height="5" rx="2" fill="#059669"/>
+            <line x1="15" y1="45" x2="108" y2="45" stroke="#34D399" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.6"/>
+            <text x="50" y="42" fill="#34D399" fontSize="8" opacity="0.8">straight line</text>
+          </svg>
+        ),
+      },
+      {
+        name: "Cable Glute Kickback",
+        sets: "3 sets × 12 each leg",
+        rest: "45s rest",
+        tip: "Attach cable to ankle, kick back and up squeezing glute. Keep hips square.",
+        machine: true,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="20" width="15" height="65" rx="3" fill="#34D399" opacity="0.2"/>
+            <circle cx="12" cy="38" r="6" fill="#34D399" opacity="0.3"/>
+            <line x1="20" y1="38" x2="70" y2="82" stroke="#34D399" strokeWidth="2" strokeDasharray="3,2"/>
+            <circle cx="88" cy="32" r="7" fill="#059669"/>
+            <line x1="85" y1="38" x2="68" y2="55" stroke="#059669" strokeWidth="8" strokeLinecap="round"/>
+            <line x1="68" y1="58" x2="65" y2="82" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="58" y="80" width="13" height="5" rx="2" fill="#059669"/>
+            <line x1="68" y1="58" x2="78" y2="72" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="78" y1="72" x2="68" y2="88" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="72" y1="48" x2="55" y2="48" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="55" y1="48" x2="38" y2="52" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Dumbbell Row",
+        sets: "3 sets × 12 each side",
+        rest: "60s rest",
+        tip: "One hand and knee on bench. Pull dumbbell to hip, elbow close to body.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="55" width="55" height="10" rx="4" fill="#34D399" opacity="0.2"/>
+            <rect x="72" y="70" width="14" height="5" rx="2" fill="#34D399" opacity="0.6"/>
+            <rect x="70" y="67" width="4" height="11" rx="2" fill="#34D399" opacity="0.8"/>
+            <rect x="86" y="67" width="4" height="11" rx="2" fill="#34D399" opacity="0.8"/>
+            <circle cx="30" cy="35" r="7" fill="#059669"/>
+            <line x1="35" y1="40" x2="80" y2="50" stroke="#059669" strokeWidth="8" strokeLinecap="round"/>
+            <line x1="38" y1="44" x2="35" y2="58" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="55" y1="52" x2="52" y2="64" stroke="#059669" strokeWidth="5" strokeLinecap="round"/>
+            <line x1="75" y1="52" x2="80" y2="62" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="72" y1="54" x2="75" y2="80" stroke="#059669" strokeWidth="5" strokeLinecap="round"/>
+            <rect x="68" y="78" width="13" height="5" rx="2" fill="#059669"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Glute Bridge",
+        sets: "3 sets × 15 reps",
+        rest: "45s rest",
+        tip: "Feet flat on floor, push hips up squeezing glutes. Hold 2 seconds at top.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="88" width="110" height="4" rx="2" fill="#34D399" opacity="0.2"/>
+            <circle cx="18" cy="72" r="7" fill="#059669"/>
+            <rect x="23" y="68" width="25" height="10" rx="3" fill="#059669"/>
+            <line x1="48" y1="72" x2="72" y2="55" stroke="#059669" strokeWidth="9" strokeLinecap="round"/>
+            <line x1="72" y1="58" x2="80" y2="78" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="80" y1="60" x2="88" y2="78" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="73" y="76" width="13" height="6" rx="2" fill="#059669"/>
+            <rect x="81" y="76" width="13" height="6" rx="2" fill="#059669"/>
+            <line x1="25" y1="74" x2="10" y2="82" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="48" y1="74" x2="55" y2="84" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="65" y1="55" x2="65" y2="88" stroke="#34D399" strokeWidth="1.5" strokeDasharray="3,2" opacity="0.5"/>
+          </svg>
+        ),
+      },
+      {
+        name: "Ab Crunch / Machine",
+        sets: "3 sets × 15 reps",
+        rest: "45s rest",
+        tip: "Curl torso toward knees, exhale at the top. No neck pulling — hands lightly behind ears.",
+        machine: false,
+        svg: (
+          <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="80" width="100" height="6" rx="3" fill="#34D399" opacity="0.15"/>
+            <circle cx="38" cy="52" r="7" fill="#059669"/>
+            <line x1="35" y1="55" x2="25" y2="50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="41" y1="55" x2="50" y2="50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="38" y1="58" x2="55" y2="68" stroke="#059669" strokeWidth="9" strokeLinecap="round"/>
+            <rect x="54" y="68" width="25" height="9" rx="3" fill="#059669"/>
+            <line x1="65" y1="77" x2="72" y2="60" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="79" y1="77" x2="85" y2="60" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="72" y1="60" x2="88" y2="68" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <line x1="85" y1="60" x2="100" y2="68" stroke="#059669" strokeWidth="6" strokeLinecap="round"/>
+            <rect x="85" y="66" width="13" height="5" rx="2" fill="#059669"/>
+            <rect x="98" y="66" width="13" height="5" rx="2" fill="#059669"/>
+          </svg>
+        ),
+      },
+    ],
+  },
+};
+
+const timeVariants = {
+  short: { label: "45 min", exercises: 4 },
+  medium: { label: "1 hour", exercises: 6 },
+  long: { label: "1.5 hrs", exercises: 8 },
+};
+
+const pullUpStages = [
+  { week: "Wk 1–3", label: "Foundation", desc: "Lat pulldown + cable row only" },
+  { week: "Wk 2–6", label: "Dead Hangs", desc: "Add dead hangs every session" },
+  { week: "Wk 3–6", label: "Negatives", desc: "Add negative pull ups" },
+  { week: "Wk 6–12", label: "First Pull Up!", desc: "Attempt unassisted after band sets" },
+];
+
+// --- progress persistence (so your friend's checkmarks stick) ---
+function loadState(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function WorkoutPlan() {
+  const [activeDay, setActiveDay] = useState("A");
+  const [timeMode, setTimeMode] = useState("medium");
+  const [checkedExercises, setCheckedExercises] = useState(() => loadState("wp_checked", {}));
+  const [expandedExercise, setExpandedExercise] = useState(null);
+  const [pullUpStagesDone, setPullUpStagesDone] = useState(() => loadState("wp_pullup", [false, false, false, false]));
+  const [showPullUp, setShowPullUp] = useState(false);
+
+  useEffect(() => { localStorage.setItem("wp_checked", JSON.stringify(checkedExercises)); }, [checkedExercises]);
+  useEffect(() => { localStorage.setItem("wp_pullup", JSON.stringify(pullUpStagesDone)); }, [pullUpStagesDone]);
+
+  const day = workouts[activeDay];
+  const count = timeVariants[timeMode].exercises;
+  const visibleExercises = day.exercises.slice(0, count);
+
+  const toggleCheck = (key) => {
+    setCheckedExercises((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const resetDay = () => {
+    setCheckedExercises((prev) => {
+      const next = { ...prev };
+      visibleExercises.forEach((e) => { delete next[`${activeDay}-${e.name}`]; });
+      return next;
+    });
+  };
+
+  const completedCount = visibleExercises.filter(
+    (e) => checkedExercises[`${activeDay}-${e.name}`]
+  ).length;
+
+  return (
+    <div style={{
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      background: "#0F0F12",
+      minHeight: "100vh",
+      color: "#F1F0EE",
+      padding: "0 0 40px 0",
+    }}>
+      <div style={{
+        background: "linear-gradient(135deg, #1A1A20 0%, #16161C 100%)",
+        padding: "28px 20px 20px",
+        borderBottom: "1px solid #2A2A32",
+      }}>
+        <div style={{ fontSize: 11, letterSpacing: "0.15em", color: "#888", textTransform: "uppercase", marginBottom: 6 }}>
+          Your Gym Plan
+        </div>
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#F1F0EE", letterSpacing: "-0.02em" }}>
+          2–3× Weekly Split
+        </h1>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: "#666", lineHeight: 1.5 }}>
+          Lower body · Upper body · Full body
+        </p>
+      </div>
+
+      <div style={{ padding: "16px 20px 0", display: "flex", gap: 10 }}>
+        {Object.entries(workouts).map(([key, w]) => (
+          <button
+            key={key}
+            onClick={() => { setActiveDay(key); setExpandedExercise(null); }}
+            style={{
+              flex: 1,
+              padding: "12px 8px",
+              borderRadius: 12,
+              border: activeDay === key ? `2px solid ${w.color}` : "2px solid #2A2A32",
+              background: activeDay === key ? `${w.color}18` : "#1A1A20",
+              color: activeDay === key ? w.color : "#666",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: 12,
+              transition: "all 0.2s",
+            }}
+          >
+            <div style={{ fontSize: 15, marginBottom: 2 }}>{w.label}</div>
+            <div style={{ fontSize: 10, opacity: 0.8 }}>{w.focus}</div>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: "14px 20px 0" }}>
+        <div style={{ fontSize: 11, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+          Time available today
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {Object.entries(timeVariants).map(([key, v]) => (
+            <button
+              key={key}
+              onClick={() => setTimeMode(key)}
+              style={{
+                flex: 1,
+                padding: "8px 4px",
+                borderRadius: 8,
+                border: timeMode === key ? `1.5px solid ${day.color}` : "1.5px solid #2A2A32",
+                background: timeMode === key ? `${day.color}15` : "#1A1A20",
+                color: timeMode === key ? day.color : "#555",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 500,
+                transition: "all 0.2s",
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "14px 20px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Progress
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 12, color: day.color, fontWeight: 600 }}>
+              {completedCount}/{visibleExercises.length}
+            </span>
+            {completedCount > 0 && (
+              <button onClick={resetDay} style={{ fontSize: 10, color: "#555", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                reset
+              </button>
+            )}
+          </span>
+        </div>
+        <div style={{ height: 4, background: "#2A2A32", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{
+            height: "100%",
+            width: `${visibleExercises.length > 0 ? (completedCount / visibleExercises.length) * 100 : 0}%`,
+            background: day.color,
+            borderRadius: 2,
+            transition: "width 0.4s ease",
+          }} />
+        </div>
+      </div>
+
+      <div style={{ padding: "16px 20px 0", display: "flex", flexDirection: "column", gap: 12 }}>
+        {visibleExercises.map((ex, i) => {
+          const checkKey = `${activeDay}-${ex.name}`;
+          const isChecked = !!checkedExercises[checkKey];
+          const isExpanded = expandedExercise === checkKey;
+
+          return (
+            <div
+              key={ex.name}
+              style={{
+                background: isChecked ? "#1A1A20" : "#1C1C24",
+                borderRadius: 14,
+                border: `1.5px solid ${isChecked ? "#2A2A32" : isExpanded ? day.color + "60" : "#2A2A32"}`,
+                overflow: "hidden",
+                transition: "all 0.2s",
+                opacity: isChecked ? 0.6 : 1,
+              }}
+            >
+              <div
+                style={{ padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
+                onClick={() => setExpandedExercise(isExpanded ? null : checkKey)}
+              >
+                <div style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  background: `${day.color}20`,
+                  color: day.color,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}>
+                  {i + 1}
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: isChecked ? "#555" : "#F1F0EE", marginBottom: 2 }}>
+                    {ex.name}
+                    {ex.machine && (
+                      <span style={{ marginLeft: 6, fontSize: 9, background: "#2A2A32", color: "#888", padding: "2px 5px", borderRadius: 4, letterSpacing: "0.05em" }}>
+                        MACHINE
+                      </span>
+                    )}
+                    {ex.pullup && (
+                      <span style={{ marginLeft: 6, fontSize: 9, background: "#F472B630", color: "#F472B6", padding: "2px 5px", borderRadius: 4, letterSpacing: "0.05em" }}>
+                        PULL UP GOAL
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#666" }}>{ex.sets} · {ex.rest}</div>
+                </div>
+
+                <div style={{ color: "#444", fontSize: 16, transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</div>
+
+                <div
+                  onClick={(e) => { e.stopPropagation(); toggleCheck(checkKey); }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    border: `2px solid ${isChecked ? day.color : "#3A3A42"}`,
+                    background: isChecked ? day.color : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {isChecked && <span style={{ color: "#fff", fontSize: 13, lineHeight: 1 }}>✓</span>}
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div style={{ borderTop: `1px solid #2A2A32`, padding: "16px", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 110,
+                    height: 90,
+                    flexShrink: 0,
+                    background: `${day.color}10`,
+                    borderRadius: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 4,
+                  }}>
+                    {ex.svg}
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: 10, color: day.color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 6 }}>
+                      Form tip
+                    </div>
+                    <div style={{ fontSize: 12, color: "#AAA", lineHeight: 1.6 }}>
+                      {ex.tip}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ margin: "20px 20px 0" }}>
+        <button
+          onClick={() => setShowPullUp(!showPullUp)}
+          style={{
+            width: "100%",
+            background: "#1A1A20",
+            border: "1.5px solid #F472B630",
+            borderRadius: 12,
+            padding: "14px 16px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: "#F1F0EE",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 18 }}>🎯</span>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#F472B6" }}>Pull Up Goal Tracker</div>
+              <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>
+                {pullUpStagesDone.filter(Boolean).length}/4 stages complete
+              </div>
+            </div>
+          </div>
+          <div style={{ color: "#444", fontSize: 16, transition: "transform 0.2s", transform: showPullUp ? "rotate(90deg)" : "rotate(0deg)" }}>›</div>
+        </button>
+
+        {showPullUp && (
+          <div style={{ background: "#1A1A20", border: "1.5px solid #2A2A32", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "4px 16px 16px" }}>
+            <div style={{ fontSize: 11, color: "#555", marginBottom: 12, lineHeight: 1.6 }}>
+              Tap each stage as you reach it. First pull up typically in 8–12 weeks.
+            </div>
+            {pullUpStages.map((stage, i) => {
+              const done = pullUpStagesDone[i];
+              return (
+                <div
+                  key={i}
+                  onClick={() => {
+                    const updated = [...pullUpStagesDone];
+                    updated[i] = !updated[i];
+                    setPullUpStagesDone(updated);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 0",
+                    borderBottom: i < pullUpStages.length - 1 ? "1px solid #2A2A32" : "none",
+                    cursor: "pointer",
+                    opacity: done ? 0.5 : 1,
+                  }}
+                >
+                  <div style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    border: `2px solid ${done ? "#F472B6" : "#3A3A42"}`,
+                    background: done ? "#F472B6" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    fontSize: 11,
+                    color: "#fff",
+                  }}>
+                    {done ? "✓" : ""}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: done ? "#555" : "#F1F0EE" }}>
+                      {stage.label}
+                      {i === 3 && !done && <span style={{ marginLeft: 6, fontSize: 11 }}>🏆</span>}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 1 }}>{stage.week} · {stage.desc}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        margin: "20px 20px 0",
+        background: "#1A1A20",
+        borderRadius: 12,
+        padding: "14px 16px",
+        border: "1px solid #2A2A32",
+      }}>
+        <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>
+          How to use this split
+        </div>
+        <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7 }}>
+          <span style={{ color: workouts.A.color }}>Day A (Lower)</span> → rest →{" "}
+          <span style={{ color: workouts.B.color }}>Day B (Upper)</span> → rest →{" "}
+          <span style={{ color: workouts.C.color }}>Day C (Full Body)</span><br />
+          On 2× weeks, alternate A and B. Skating days count as active recovery.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<WorkoutPlan />);
+  </script>
+</body>
+</html>
