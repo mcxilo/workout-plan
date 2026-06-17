@@ -30,8 +30,40 @@
   <div id="root"></div>
   <script>
 const {
-  useState
+  useState,
+  useEffect
 } = React;
+function reviveWeeks(weeks) {
+  try {
+    return weeks.map(w => ({
+      ...w,
+      days: (w.days || []).map(d => ({
+        ...d,
+        date: new Date(d.date)
+      }))
+    }));
+  } catch (e) {
+    return weeks;
+  }
+}
+function usePersistentState(key, initial, revive) {
+  const [val, setVal] = useState(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw != null) {
+        const p = JSON.parse(raw);
+        return revive ? revive(p) : p;
+      }
+    } catch (e) {}
+    return typeof initial === "function" ? initial() : initial;
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {}
+  }, [val]);
+  return [val, setVal];
+}
 
 /* ═══ THEME SYSTEM ═══
    Light = exact icon colorway (cyan bg, sky blue body, lime green, coral, golden frog)
@@ -1533,20 +1565,20 @@ function exportWeek(w, weekDates) {
 
 /* ══ MAIN ══ */
 function FitnessCalendar() {
-  const [themeMode, setThemeMode] = useState("light");
+  const [themeMode, setThemeMode] = usePersistentState("wp_themeMode", "light");
   const t = THEMES[themeMode];
-  const [currentWeek, setCurrentWeek] = useState(0);
-  const [allWeeks, setAllWeeks] = useState(() => Array.from({
+  const [currentWeek, setCurrentWeek] = usePersistentState("wp_currentWeek", 0);
+  const [allWeeks, setAllWeeks] = usePersistentState("wp_allWeeks", () => Array.from({
     length: TOTAL_WEEKS
-  }, (_, i) => makeWeek(i)));
+  }, (_, i) => makeWeek(i)), reviveWeeks);
   const [activeView, setActiveView] = useState("calendar");
   const [selectedDay, setSelectedDay] = useState(null);
   const [editingDay, setEditingDay] = useState(null);
-  const [pullUpDone, setPullUpDone] = useState([false, false, false, false]);
-  const [pullUpNotes, setPullUpNotes] = useState(["", "", "", ""]);
+  const [pullUpDone, setPullUpDone] = usePersistentState("wp_pullUpDone", [false, false, false, false]);
+  const [pullUpNotes, setPullUpNotes] = usePersistentState("wp_pullUpNotes", ["", "", "", ""]);
   const [pullUpOpen, setPullUpOpen] = useState(null);
-  const [pullUpWkNotes, setPullUpWkNotes] = useState(Array(20).fill(""));
-  const [pullUpWkDone, setPullUpWkDone] = useState(Array(20).fill(false));
+  const [pullUpWkNotes, setPullUpWkNotes] = usePersistentState("wp_pullUpWkNotes", Array(20).fill(""));
+  const [pullUpWkDone, setPullUpWkDone] = usePersistentState("wp_pullUpWkDone", Array(20).fill(false));
   const [pullUpWkOpen, setPullUpWkOpen] = useState(null);
   const week = allWeeks[currentWeek];
   const weekDates = getWeekDates(currentWeek);
