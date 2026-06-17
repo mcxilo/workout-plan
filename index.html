@@ -2,9 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0F0F12" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#D6F6F6" />
   <title>Fitness Check-in · 20-Week Plan</title>
+
+  <!-- Add to Home Screen (iOS Safari / Android Chrome) -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Fitness" />
+  <meta name="application-name" content="Fitness" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -12,25 +23,94 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; padding: 0; background: #0F0F12; }
+    html, body { margin: 0; padding: 0; background: #D6F6F6; font-family: 'Inter', system-ui, sans-serif; }
     button { font-family: inherit; }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-presets="react">
 const { useState } = React;
 
+/* ═══ THEME SYSTEM ═══
+   Light = exact icon colorway (cyan bg, sky blue body, lime green, coral, golden frog)
+   Dark  = same family deepened into a dusable night palette (not generic dark-UI grey) */
+const THEMES = {
+  light: {
+    mode:"light",
+    bg:"#D6F6F6",              // cyan background like the icon
+    headerBg:"linear-gradient(135deg,#BEEFEF,#CFF3E0)",
+    headerBorder:"#A9E0E0",
+    card:"#FFFFFF",
+    cardAlt:"#EAFBFA",
+    cardBorder:"#BFE9E9",
+    inputBg:"#F3FDFD",
+    inputBorder:"#BFE9E9",
+    textPrimary:"#2B3A3A",
+    textBody:"#3F5454",
+    textMuted:"#6B8484",
+    textFaint:"#9CB8B8",
+    divider:"#CDEDED",
+    shadow:"rgba(60,110,110,0.10)",
+    restBg:"#FFF6DD",
+    restBorder:"#EFD988",
+    completeBg:"#E6F8E0",
+    completeBorder:"#BFE8B0",
+  },
+  dark: {
+    mode:"dark",
+    bg:"#0E1B1C",               // deep teal-navy, same family as the cyan icon bg
+    headerBg:"linear-gradient(135deg,#16282A,#122421)",
+    headerBorder:"#1E3638",
+    card:"#142728",
+    cardAlt:"#10211F",
+    cardBorder:"#1E3638",
+    inputBg:"#0E1F1F",
+    inputBorder:"#234040",
+    textPrimary:"#EAF6F6",
+    textBody:"#BFD8D8",
+    textMuted:"#7C9999",
+    textFaint:"#4F6B6B",
+    divider:"#1E3638",
+    shadow:"rgba(0,0,0,0.3)",
+    restBg:"#211C0E",
+    restBorder:"#4A3E16",
+    completeBg:"#102219",
+    completeBorder:"#234A30",
+  },
+};
+
+// Brand accents stay constant across both themes (these ARE the icon's palette)
 const COLORS = {
-  gym:"#60A5FA", skate:"#A78BFA", walk:"#34D399",
-  rest:"#3A3A42", pullup:"#FB923C", accent:"#C084FC",
+  gym:"#3FAFC4", skate:"#9B7FD4", walk:"#5FB84B",
+  rest:"#E0B72E", pullup:"#EE6A4C", accent:"#3FAFC4",
+};
+
+const GYM_DAY_COLORS = {
+  A: "#3FAFC4", // sky blue - lower body
+  B: "#EE6A4C", // coral - upper body
+  C: "#8BB83A", // lime green - full body
+  none: "#8A9A9A",
+};
+
+const STEP_GOAL = 8000; // research-backed realistic daily goal
+
+const RATING_ICONS = {
+  energy:        { filled:"⚡", empty:"🤍", color:"#E0B72E" },
+  stress:        { filled:"🌧️", empty:"☀️", color:"#3FAFC4", inverted:true },
+  moodStability: { filled:"🌸", empty:"🤍", color:"#EE6A4C" },
+  cravings:      { filled:"🍩", empty:"🤍", color:"#EE6A4C", inverted:true },
+};
+
+const RATING_LABELS = {
+  energy:"Energy", stress:"Stress", moodStability:"Mood", cravings:"Cravings",
 };
 
 const EFFORT_LEVELS = [
-  { key:"slow",   label:"Slow",   emoji:"🐢", color:"#60A5FA" },
-  { key:"medium", label:"Medium", emoji:"🔥", color:"#FB923C" },
-  { key:"full",   label:"Full",   emoji:"⚡", color:"#F87171" },
+  { key:"slow",   label:"Slow",   emoji:"🐢", color:"#3FAFC4" },
+  { key:"medium", label:"Medium", emoji:"🔥", color:"#EE6A4C" },
+  { key:"full",   label:"Full",   emoji:"⚡", color:"#E0584A" },
 ];
 
 const MOTIVATION_EMOJIS = [
@@ -46,6 +126,13 @@ const GYM_DAYS = {
   B:    { label:"Day B", focus:"Upper Body", exercises:["Seated Cable Row","Lat Pulldown","Shoulder Press","Chest Press","Tricep Pushdown","Bicep Curl","Dead Hang","Negative Pull Up"] },
   C:    { label:"Day C", focus:"Full Body",  exercises:["Dumbbell Lunge","Plank","Cable Glute Kickback","Dumbbell Row","Glute Bridge","Ab Crunch"] },
   none: { label:"Rest",  focus:"Recovery",   exercises:[] },
+};
+
+const GYM_DAY_DETAILS = {
+  A: "Lower Body — legs, glutes, hamstrings",
+  B: "Upper Body — back, chest, shoulders, arms",
+  C: "Full Body — mixed strength + core",
+  none: "Rest from gym today",
 };
 
 const WEEK_START  = new Date(2026, 5, 15);
@@ -65,7 +152,7 @@ function monIdx(d)  { return (d.getDay()+6)%7; }
 
 const PULL_UP_STAGES = [
   {
-    label:"Foundation 🪨", sub:"Lat pulldown + cable row every Day B", week:"Wk 1–3", color:"#60A5FA",
+    label:"Foundation 🪨", sub:"Lat pulldown + cable row every Day B", week:"Wk 1–3", color:"#3FAFC4",
     schedule:[
       { day:"Every Day B", task:"3×12 Lat Pulldown — pull to chest, slow on the way up" },
       { day:"Every Day B", task:"3×12 Seated Cable Row — squeeze shoulder blades together" },
@@ -75,7 +162,7 @@ const PULL_UP_STAGES = [
     milestone:"You'll feel your back getting stronger. Lat pulldown weight will go up. That's the signal.",
   },
   {
-    label:"Dead Hangs 🧗", sub:"Add dead hangs every gym session", week:"Wk 4–6", color:"#A78BFA",
+    label:"Dead Hangs 🧗", sub:"Add dead hangs every gym session", week:"Wk 4–6", color:"#8BB83A",
     schedule:[
       { day:"Every Day B", task:"3×20–30 sec dead hang — arms straight, shoulders down" },
       { day:"Every Day B", task:"Continue lat pulldown + cable row from Stage 1" },
@@ -85,7 +172,7 @@ const PULL_UP_STAGES = [
     milestone:"When you can hang 30 seconds without shaking, you're ready for negatives.",
   },
   {
-    label:"Negatives ⬆️", sub:"Lower yourself as slowly as possible", week:"Wk 7–12", color:"#FB923C",
+    label:"Negatives ⬆️", sub:"Lower yourself as slowly as possible", week:"Wk 7–12", color:"#EE6A4C",
     schedule:[
       { day:"Every Day B", task:"3×3–5 negative pull ups — jump to top, lower in 5–8 sec" },
       { day:"Every Day B", task:"3×20–30 sec dead hang (keep doing these!)" },
@@ -95,7 +182,7 @@ const PULL_UP_STAGES = [
     milestone:"When your negative takes 8+ seconds and feels controlled, attempt one unassisted pull up.",
   },
   {
-    label:"First Pull Up! 🏆", sub:"You did it — now build from here", week:"Wk 13–20", color:"#FBBF24",
+    label:"First Pull Up! 🏆", sub:"You did it — now build from here", week:"Wk 13–20", color:"#E0B72E",
     schedule:[
       { day:"Every Day B", task:"Attempt 1–3 unassisted pull ups at the START (freshest muscles)" },
       { day:"Every Day B", task:"Continue negatives and band-assisted to build more reps" },
@@ -130,24 +217,18 @@ const PULLUP_WEEKLY = [
 ];
 
 const CHECKIN_FIELDS = [
-  { key:"energy",        label:"Energy this week",        type:"rating" },
-  { key:"sleep",         label:"Sleep quality",            type:"rating" },
-  { key:"stress",        label:"Stress level",             type:"rating" },
-  { key:"moodStability", label:"Mood stability",           type:"rating" },
-  { key:"cravings",      label:"Cravings / stress eating", type:"rating" },
-  { key:"hunger",        label:"Hunger overall",           type:"rating" },
-  { key:"win",           label:"This week's win 🏅",      type:"text", placeholder:"e.g. skated 3x!" },
-  { key:"improve",       label:"One thing to improve",     type:"text", placeholder:"e.g. more protein at lunch" },
+  { key:"win",     label:"This week's win 🏅",      type:"text", placeholder:"e.g. skated 3x!" },
+  { key:"improve", label:"One thing to improve",     type:"text", placeholder:"e.g. more protein at lunch" },
 ];
 
 const DEFAULT_SCHEDULE = [
-  { gymDay:"A",    skate:false, walk:false },
-  { gymDay:"none", skate:false, walk:true  },
-  { gymDay:"B",    skate:false, walk:false },
-  { gymDay:"none", skate:true,  walk:false },
-  { gymDay:"C",    skate:false, walk:false },
-  { gymDay:"none", skate:true,  walk:false },
-  { gymDay:"none", skate:false, walk:true  },
+  { gymDay:"A"    },
+  { gymDay:"none" },
+  { gymDay:"B"    },
+  { gymDay:"none", skate:true },
+  { gymDay:"C"    },
+  { gymDay:"none", skate:true },
+  { gymDay:"none" },
 ];
 
 function makeWeek(wi) {
@@ -155,12 +236,13 @@ function makeWeek(wi) {
   return {
     weekNum: wi+1,
     days: DEFAULT_SCHEDULE.map((s,i) => ({
-      date:dates[i], gymDay:s.gymDay, skate:s.skate, walk:s.walk,
-      completed:false, gymDone:{}, notes:"", motivation:"",
+      date:dates[i], gymDay:s.gymDay||"none", skate:!!s.skate,
+      completed:false, gymDone:{}, notes:"", motivation:"", weight:"",
       gymEffort:"", skateEffort:"", walkEffort:"",
       walkSteps:"", skateMinutes:"", skateCalories:"",
+      energy:0, stress:0, moodStability:0, cravings:0,
     })),
-    checkin:{ weightStart:"", weightEnd:"", waist:"", energy:0, sleep:0, stress:0, moodStability:0, cravings:0, hunger:0, win:"", improve:"" },
+    checkin:{ waist:"", win:"", improve:"" },
     checkinDone:false,
   };
 }
@@ -170,90 +252,90 @@ function getWalkCondition(steps, effort) {
   const s = parseInt(steps);
   if (!steps||isNaN(s)||s<=0) return null;
   if (effort==="full") {
-    if (s<4500)  return { label:"Walking Like You Meant It ⚡",  emoji:"⚡", color:"#60A5FA", tip:"Short but intentional — quality over quantity today, and that counts 💙" };
-    if (s<7000)  return { label:"Power Walking Energy! 💪🏻",     emoji:"💪", color:"#34D399", tip:"You turned a stroll into a workout — full effort shows 💚" };
-    if (s<10000) return { label:"Brisk & Purposeful 🔥",         emoji:"✨", color:"#FB923C", tip:"Brisk and purposeful — you walked like you had somewhere important to be 🔥" };
-    return         { label:"Full Power, Full Distance 👑",        emoji:"🏅", color:"#FBBF24", tip:"Full power, full distance — walked like you had somewhere important to be 👑" };
+    if (s<4500)  return { label:"Walking Like You Meant It ⚡",  emoji:"⚡", color:"#3FAFC4", tip:"Short but intentional — quality over quantity today 💙" };
+    if (s<7000)  return { label:"Power Walking Energy! 💪🏻",     emoji:"💪", color:"#5FB84B", tip:"You turned a stroll into a workout — full effort shows 💚" };
+    if (s<10000) return { label:"Brisk & Purposeful 🔥",         emoji:"✨", color:"#EE6A4C", tip:"You walked like you had somewhere important to be 🔥" };
+    return         { label:"Full Power, Full Distance 👑",        emoji:"🏅", color:"#E0B72E", tip:"Full power, full distance — elite behaviour 👑" };
   }
   if (effort==="medium") {
-    if (s<4500)  return { label:"Short & Sweet 🌸",              emoji:"🌸", color:"#60A5FA", tip:"Short and sweet — still counts, still moves the needle 💙" };
-    if (s<7000)  return { label:"Moving and Shining! ✨",         emoji:"🌿", color:"#34D399", tip:"Small steps, big energy — you showed up and that's everything 💚" };
-    if (s<10000) return { label:"She's That Girl 🌀",            emoji:"✨", color:"#FB923C", tip:"She's walking, she's glowing, she's that girl — keep this energy 🔥" };
-    return         { label:"10k Steady 🏅",                      emoji:"⭐", color:"#FBBF24", tip:"10k steps at a steady pace — that's a real achievement, not everyone does this 🏅" };
+    if (s<4500)  return { label:"Short & Sweet 🌸",              emoji:"🌸", color:"#3FAFC4", tip:"Short and sweet — still counts 💙" };
+    if (s<7000)  return { label:"Moving and Shining! ✨",         emoji:"🌿", color:"#5FB84B", tip:"Small steps, big energy 💚" };
+    if (s<10000) return { label:"She's That Girl 🌀",            emoji:"✨", color:"#EE6A4C", tip:"She's walking, she's glowing, she's that girl 🔥" };
+    return         { label:"10k Steady 🏅",                      emoji:"⭐", color:"#E0B72E", tip:"10k steps at a steady pace — real achievement 🏅" };
   }
   if (effort==="slow") {
-    if (s<4500)  return { label:"Gentle Wander 🌙",              emoji:"🌙", color:"#60A5FA", tip:"Gentle wander — sometimes the soul needs a slow one 💙" };
-    if (s<7000)  return { label:"Easy Stroll 🌿",                emoji:"🌿", color:"#34D399", tip:"Easy stroll, decent distance — your body moved and that's what matters 💚" };
-    if (s<10000) return { label:"Long & Easy 🌿",                emoji:"💚", color:"#34D399", tip:"Long and easy — hours on your feet at a gentle pace does more than people realise 🌿" };
-    return         { label:"10k on Slow Burn 🌟",                emoji:"🌟", color:"#FBBF24", tip:"10k steps at a gentle pace — hours on your feet. Underrated but incredible 🌟" };
+    if (s<4500)  return { label:"Gentle Wander 🌙",              emoji:"🌙", color:"#3FAFC4", tip:"Sometimes the soul needs a slow one 💙" };
+    if (s<7000)  return { label:"Easy Stroll 🌿",                emoji:"🌿", color:"#5FB84B", tip:"Easy stroll, decent distance — that's what matters 💚" };
+    if (s<10000) return { label:"Long & Easy 🌿",                emoji:"💚", color:"#5FB84B", tip:"Hours on your feet at a gentle pace 🌿" };
+    return         { label:"10k on Slow Burn 🌟",                emoji:"🌟", color:"#E0B72E", tip:"10k at a gentle pace — underrated but incredible 🌟" };
   }
-  if (s<4500)  return { label:"Baby Steps, Still Steps! 🐣", emoji:"🐾", color:"#60A5FA", tip:"Legs warming up! Every little loop adds up 💙" };
-  if (s<7000)  return { label:"Actually Moving Today! 🌿",   emoji:"🌿", color:"#34D399", tip:"Small steps, big energy — you showed up and that's everything 💚" };
-  if (s<10000) return { label:"Walking With Purpose! ✨",     emoji:"✨", color:"#FB923C", tip:"She's got places to be and steps to hit — this is that girl behaviour 🔥" };
-  return         { label:"Superstar Walker! 🏅",              emoji:"⭐", color:"#FBBF24", tip:"10k+ steps?! You walked your way to the top tier — elite behaviour 👑" };
+  if (s<4500)  return { label:"Baby Steps, Still Steps! 🐣", emoji:"🐾", color:"#3FAFC4", tip:"Every little loop adds up 💙" };
+  if (s<7000)  return { label:"Actually Moving Today! 🌿",   emoji:"🌿", color:"#5FB84B", tip:"You showed up and that's everything 💚" };
+  if (s<10000) return { label:"Walking With Purpose! ✨",     emoji:"✨", color:"#EE6A4C", tip:"That girl behaviour 🔥" };
+  return         { label:"Superstar Walker! 🏅",              emoji:"⭐", color:"#E0B72E", tip:"10k+ steps?! Elite behaviour 👑" };
 }
 
 function getSkateCondition(cal, min, effort) {
   const c = parseInt(cal), m = parseInt(min);
   const hasC = cal&&!isNaN(c)&&c>0, hasM = min&&!isNaN(m)&&m>0;
   if (!hasC&&!hasM) return null;
-  const score = hasC ? c : m*6;
-  const size  = score<150?"low":score<300?"medium":"high";
-  const minL  = hasM?` · ${m} min`:"", calL = hasC?` · ${c} kcal`:"";
-  const combo = (minL+calL).trim();
+  const size = hasC
+    ? (c<250?"low":c<450?"medium":"high")
+    : (m<30?"low":m<55?"medium":"high");
+  const stats = hasM&&hasC ? `${m} min, ${c} kcal` : hasM ? `${m} min` : `${c} kcal`;
   if (effort==="full") {
-    if (size==="low")    return { label:"All Gas, Short Session ⚡",   emoji:"⚡", color:"#60A5FA", tip:`Burned bright and fast${combo} — all in on a short one 💙` };
-    if (size==="medium") return { label:"Commitment On Wheels ⚡",     emoji:"💪", color:"#FB923C", tip:`Maximum energy, real distance${combo} — this is what commitment looks like on wheels ⚡` };
-    return                 { label:"Elite Skater Mode 🚀",             emoji:"🚀", color:"#F472B6", tip:`Full power, long session${combo} — you're literally an athlete now 🚀` };
+    if (size==="low")    return { label:"All Gas, Short Session ⚡",   emoji:"⚡", color:"#3FAFC4", tip:`${stats} — burned bright and fast, all in on a short one 💙` };
+    if (size==="medium") return { label:"Commitment On Wheels ⚡",     emoji:"💪", color:"#EE6A4C", tip:`${stats} — maximum energy, real distance. This is what commitment looks like ⚡` };
+    return                 { label:"Elite Skater Mode 🚀",             emoji:"🚀", color:"#EE6A4C", tip:`${stats} — full power, long session. You're an athlete 🚀` };
   }
   if (effort==="medium") {
-    if (size==="low")    return { label:"Easy Warmup Skate 🌊",        emoji:"🌊", color:"#60A5FA", tip:`Wheels turning${combo} — easy warmup, that's what matters 💙` };
-    if (size==="medium") return { label:"Smooth Operator 💨",          emoji:"💨", color:"#34D399", tip:`Smooth and steady${combo} — this is your bread and butter session 💚` };
-    return                 { label:"Long & Steady 🌊",                 emoji:"🌊", color:"#34D399", tip:`Long and steady${combo} — you kept going when most people would've stopped 🌊` };
+    if (size==="low")    return { label:"Easy Warmup Skate 🌊",        emoji:"🌊", color:"#3FAFC4", tip:`${stats} — wheels turning, easy warmup 💙` };
+    if (size==="medium") return { label:"Smooth Operator 💨",          emoji:"💨", color:"#5FB84B", tip:`${stats} — smooth and steady, your bread and butter 💚` };
+    return                 { label:"Long & Steady 🌊",                 emoji:"🌊", color:"#5FB84B", tip:`${stats} — kept going when most would've stopped 🌊` };
   }
   if (effort==="slow") {
-    if (size==="low")    return { label:"Breezy Recovery Glide 🌸",    emoji:"🌸", color:"#60A5FA", tip:`Easy does it${combo} — joints and muscles grateful 💙` };
-    if (size==="medium") return { label:"Gentle Pace, Real Time 💙",   emoji:"💙", color:"#34D399", tip:`Gentle pace, real time on skates${combo} — body was working even when it didn't feel like it 💙` };
-    return                 { label:"Patience & Persistence 🌿",        emoji:"🌿", color:"#34D399", tip:`Took your time and stayed out there${combo} — that's exactly the right approach 🌿` };
+    if (size==="low")    return { label:"Breezy Recovery Glide 🌸",    emoji:"🌸", color:"#3FAFC4", tip:`${stats} — easy does it, joints grateful 💙` };
+    if (size==="medium") return { label:"Gentle Pace, Real Time 💙",   emoji:"💙", color:"#5FB84B", tip:`${stats} — body was working even when it didn't feel like it 💙` };
+    return                 { label:"Patience & Persistence 🌿",        emoji:"🌿", color:"#5FB84B", tip:`${stats} — stayed out there, exactly the right approach 🌿` };
   }
-  if (score<150)  return { label:"Breezy Glide 🌊",   emoji:"🌊", color:"#60A5FA", tip:`Easy cruise${combo} — recovery energy, joints are grateful 💙` };
-  if (score<250)  return { label:"Smooth Operator 💨", emoji:"💨", color:"#34D399", tip:`Solid session${combo} — wheels turning, love it! 💚` };
-  if (score<350)  return { label:"She's Pushing! 🔥",  emoji:"🔥", color:"#FB923C", tip:`Strong work${combo} — you're really going for it! 🔥` };
-  return            { label:"Full Send! 🚀",            emoji:"🚀", color:"#F472B6", tip:`Elite session${combo} — keeping up with runners on wheels 👟✨` };
+  if (size==="low")    return { label:"Breezy Glide 🌊",   emoji:"🌊", color:"#3FAFC4", tip:`${stats} — easy cruise, joints are grateful 💙` };
+  if (size==="medium") return { label:"Smooth Operator 💨", emoji:"💨", color:"#5FB84B", tip:`${stats} — solid session, wheels turning 💚` };
+  return                  { label:"Full Send! 🚀",            emoji:"🚀", color:"#EE6A4C", tip:`${stats} — elite session, keeping up with runners 👟✨` };
 }
 
 function getGymCondition(done, total, effort) {
   if (!total||done===0) return null;
-  const size = done<=2?"low":done<=4?"medium":"high";
+  const ratio = done/total;
+  const size = ratio<=0.4?"low":ratio<=0.7?"medium":"high";
   const isAll = done===total;
   if (effort==="full") {
-    if (size==="low")    return { label:"Left It All On The Floor 🔥",      emoji:"🔥", color:"#FB923C", tip:`${done}/${total} exercises — your body hit its limit today and that's valid 💪` };
-    if (size==="medium") return { label:"Pushed Hard, Got Halfway 💪🏻",     emoji:"💪", color:"#A78BFA", tip:`${done}/${total} done — full effort, real results. This is how progress is built 💜` };
-    return                 { label:"Beast Mode Activated 👑",               emoji:"👑", color:"#FBBF24", tip:`${done}/${total} — full effort, full session. Unstoppable today 🏆` };
+    if (size==="low")    return { label:"Left It All On The Floor 🔥",      emoji:"🔥", color:"#EE6A4C", tip:`${done}/${total} — your body hit its limit and that's valid 💪` };
+    if (size==="medium") return { label:"Pushed Hard, Got Halfway 💪🏻",     emoji:"💪", color:"#8BB83A", tip:`${done}/${total} — full effort, real results 💜` };
+    return                 { label:"Beast Mode Activated 👑",               emoji:"👑", color:"#E0B72E", tip:`${done}/${total} — unstoppable today 🏆` };
   }
   if (effort==="medium") {
-    if (size==="low")    return { label:"Showed Up & Did What You Could 🌸", emoji:"🌸", color:"#60A5FA", tip:`${done}/${total} exercises — some days that's the win, and it still counts 💙` };
-    if (size==="medium") return { label:"Solid Middle Ground ✨",            emoji:"✨", color:"#34D399", tip:`${done}/${total} done — steady effort, steady progress. Keep this up! 💚` };
-    return                 { label:"Consistent Icon Behaviour 👑",          emoji:"✨", color:"#FBBF24", tip:`${done}/${total} — all exercises done, energy managed well — consistent icon behaviour 👑` };
+    if (size==="low")    return { label:"Showed Up & Did What You Could 🌸", emoji:"🌸", color:"#3FAFC4", tip:`${done}/${total} — some days that's the win 💙` };
+    if (size==="medium") return { label:"Solid Middle Ground ✨",            emoji:"✨", color:"#5FB84B", tip:`${done}/${total} — steady effort, steady progress 💚` };
+    return                 { label:"Consistent Icon Behaviour 👑",          emoji:"✨", color:"#E0B72E", tip:`${done}/${total} — energy managed well, consistent icon behaviour 👑` };
   }
   if (effort==="slow") {
-    if (size==="low")    return { label:"Don't Underestimate This 🤍",      emoji:"🌱", color:"#60A5FA", tip:`${done}/${total} exercises — showing up on a slow day takes effort too 🤍` };
-    if (size==="medium") return { label:"Half The Session, All The Heart 🌸",emoji:"🌸", color:"#A78BFA", tip:`${done}/${total} done — taking it easy is also a strategy 🌸` };
-    return                 { label:"Full Session On A Slow Day 🌱",         emoji:"🌿", color:"#34D399", tip:`${done}/${total} — quiet consistency on a slow day adds up more than you know 💚` };
+    if (size==="low")    return { label:"Don't Underestimate This 🤍",      emoji:"🌱", color:"#3FAFC4", tip:`${done}/${total} — showing up on a slow day takes effort too 🤍` };
+    if (size==="medium") return { label:"Half The Session, All The Heart 🌸",emoji:"🌸", color:"#8BB83A", tip:`${done}/${total} — taking it easy is also a strategy 🌸` };
+    return                 { label:"Full Session On A Slow Day 🌱",         emoji:"🌿", color:"#5FB84B", tip:`${done}/${total} — quiet consistency adds up 💚` };
   }
-  if (done<=2)    return { label:"Showed Up & That's Enough 💛", emoji:"🌱", color:"#60A5FA", tip:`${done}/${total} exercises — showing up IS the workout. You'll feel it tomorrow!` };
-  if (done<=4)    return { label:"Halfway Hero! 🌸",             emoji:"🌸", color:"#A78BFA", tip:`${done}/${total} done — real work today! Next session will be even better.` };
-  if (!isAll)     return { label:"Almost There, Champ! 🔥",      emoji:"🔥", color:"#FB923C", tip:`${done}/${total} exercises — so close to a full session!` };
-  return            { label:"Full Gym Session! ⭐",               emoji:"👑", color:"#FBBF24", tip:`${done}/${total} — you absolutely smashed it! Rest up, earned it 💪` };
+  if (ratio<=0.4)  return { label:"Showed Up & That's Enough 💛", emoji:"🌱", color:"#3FAFC4", tip:`${done}/${total} — showing up IS the workout!` };
+  if (ratio<=0.7)  return { label:"Halfway Hero! 🌸",             emoji:"🌸", color:"#8BB83A", tip:`${done}/${total} — real work today!` };
+  if (!isAll)      return { label:"Almost There, Champ! 🔥",      emoji:"🔥", color:"#EE6A4C", tip:`${done}/${total} — so close to a full session!` };
+  return             { label:"Full Gym Session! ⭐",               emoji:"👑", color:"#E0B72E", tip:`${done}/${total} — you smashed it! 💪` };
 }
 
 function getWeekCondition(g, sk, w) {
   const t = g+sk+w;
   if (t===0) return null;
-  if (w>=3&&g>=3&&sk>=2) return { label:"Unstoppable Week! 🏆", color:"#FBBF24" };
-  if (w>=2&&g>=2&&sk>=1) return { label:"Solid Week 🔥",        color:"#FB923C" };
-  if (t>=3)               return { label:"Good Effort 🌸",       color:"#A78BFA" };
-  return                    { label:"Getting Going 🌱",           color:"#60A5FA" };
+  if (w>=3&&g>=3&&sk>=2) return { label:"Unstoppable Week! 🏆", color:"#E0B72E" };
+  if (w>=2&&g>=2&&sk>=1) return { label:"Solid Week 🔥",        color:"#EE6A4C" };
+  if (t>=3)               return { label:"Good Effort 🌸",       color:"#8BB83A" };
+  return                    { label:"Getting Going 🌱",           color:"#3FAFC4" };
 }
 
 function getMotivationCondition(emojis) {
@@ -261,30 +343,14 @@ function getMotivationCondition(emojis) {
   if (valid.length===0) return null;
   const scores = valid.map(e=>MOTIVATION_EMOJIS.find(m=>m.key===e)?.score||0);
   const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
-  if (avg<=1.5) return { label:"Tough week mentally — that's real and it's okay 🤍",       color:"#60A5FA" };
-  if (avg<=2.5) return { label:"Mostly low energy this week — rest was probably needed 🌙", color:"#A78BFA" };
-  if (avg<=3.5) return { label:"Up and down week — very normal, you still showed up 🌸",   color:"#34D399" };
-  if (avg<=4.5) return { label:"Strong motivation week — you really wanted it 💪🏻",         color:"#FB923C" };
-  return          { label:"You were locked in this week — this energy is everything 👑",    color:"#FBBF24" };
+  if (avg<=1.5) return { label:"Tough week mentally — that's real and it's okay 🤍",       color:"#3FAFC4" };
+  if (avg<=2.5) return { label:"Mostly low energy this week — rest was probably needed 🌙", color:"#8BB83A" };
+  if (avg<=3.5) return { label:"Up and down week — very normal, you still showed up 🌸",   color:"#5FB84B" };
+  if (avg<=4.5) return { label:"Strong motivation week — you really wanted it 💪🏻",         color:"#EE6A4C" };
+  return          { label:"You were locked in this week — this energy is everything 👑",    color:"#E0B72E" };
 }
 
-/* ── small components ── */
-function RatingInput({ value, onChange }) {
-  return (
-    <div style={{ display:"flex", gap:6 }}>
-      {[1,2,3,4,5].map(n=>(
-        <button key={n} onClick={()=>onChange(n===value?0:n)} style={{
-          width:32,height:32,borderRadius:8,
-          border:`1.5px solid ${value>=n?COLORS.accent:"#2A2A32"}`,
-          background:value>=n?COLORS.accent+"22":"#1A1A20",
-          color:value>=n?COLORS.accent:"#444",
-          fontSize:14,cursor:"pointer",fontWeight:600,
-        }}>{n}</button>
-      ))}
-    </div>
-  );
-}
-
+/* ── small components (theme-aware) ── */
 function Pill({ color, label }) {
   return (
     <span style={{
@@ -295,7 +361,7 @@ function Pill({ color, label }) {
   );
 }
 
-function ConditionBadge({ condition }) {
+function ConditionBadge({ condition, t }) {
   if (!condition) return null;
   return (
     <div style={{ marginTop:8,padding:"8px 10px",borderRadius:8,
@@ -304,13 +370,13 @@ function ConditionBadge({ condition }) {
       <span style={{ fontSize:16,flexShrink:0 }}>{condition.emoji}</span>
       <div>
         <div style={{ fontSize:11,fontWeight:700,color:condition.color }}>{condition.label}</div>
-        {condition.tip&&<div style={{ fontSize:10,color:"#666",marginTop:2,lineHeight:1.4 }}>{condition.tip}</div>}
+        {condition.tip&&<div style={{ fontSize:10,color:t.textMuted,marginTop:2,lineHeight:1.4 }}>{condition.tip}</div>}
       </div>
     </div>
   );
 }
 
-function EffortPicker({ value, onChange }) {
+function EffortPicker({ value, onChange, t }) {
   return (
     <div style={{ display:"flex",gap:6 }}>
       {EFFORT_LEVELS.map(e=>{
@@ -318,9 +384,9 @@ function EffortPicker({ value, onChange }) {
         return (
           <button key={e.key} onClick={()=>onChange(active?"":e.key)} style={{
             flex:1,padding:"7px 4px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",
-            border:`1.5px solid ${active?e.color:"#2A2A32"}`,
-            background:active?e.color+"20":"#1A1A22",
-            color:active?e.color:"#444",transition:"all 0.15s",
+            border:`1.5px solid ${active?e.color:t.cardBorder}`,
+            background:active?e.color+"20":t.inputBg,
+            color:active?e.color:t.textFaint,transition:"all 0.15s",
           }}>
             <div style={{ fontSize:14 }}>{e.emoji}</div>
             <div style={{ fontSize:9,marginTop:1 }}>{e.label}</div>
@@ -331,42 +397,43 @@ function EffortPicker({ value, onChange }) {
   );
 }
 
-function GarminInput({ icon, label, value, onChange, placeholder, unit }) {
+function GarminInput({ icon, label, value, onChange, placeholder, unit, t }) {
   return (
     <div style={{ flex:1 }}>
-      <div style={{ fontSize:9,color:"#555",marginBottom:4,display:"flex",alignItems:"center",gap:4 }}>
+      <div style={{ fontSize:9,color:t.textMuted,marginBottom:4,display:"flex",alignItems:"center",gap:4 }}>
         <span>{icon}</span>{label}
       </div>
-      <div style={{ display:"flex",alignItems:"center",background:"#13131A",border:"1px solid #2A2A32",borderRadius:8,overflow:"hidden" }}>
+      <div style={{ display:"flex",alignItems:"center",background:t.inputBg,border:`1px solid ${t.inputBorder}`,borderRadius:8,overflow:"hidden" }}>
         <input type="number" placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)}
-          style={{ flex:1,background:"transparent",border:"none",color:"#DDD",fontSize:13,padding:"8px 8px",outline:"none",fontFamily:"inherit",fontWeight:600,width:0 }}/>
-        <span style={{ fontSize:9,color:"#444",paddingRight:8,whiteSpace:"nowrap" }}>{unit}</span>
+          style={{ flex:1,background:"transparent",border:"none",color:t.textPrimary,fontSize:13,padding:"8px 8px",outline:"none",fontFamily:"inherit",fontWeight:600,width:0 }}/>
+        <span style={{ fontSize:9,color:t.textFaint,paddingRight:8,whiteSpace:"nowrap" }}>{unit}</span>
       </div>
     </div>
   );
 }
 
-function DayEditor({ day, onUpdate, onClose }) {
+function DayEditor({ day, onUpdate, onClose, t }) {
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:50,background:"rgba(0,0,0,0.75)",display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"#18181F",borderRadius:"18px 18px 0 0",padding:"20px 20px 40px",maxHeight:"80vh",overflowY:"auto" }}>
+    <div style={{ position:"fixed",inset:0,zIndex:50,background:"rgba(0,0,0,0.55)",display:"flex",flexDirection:"column",justifyContent:"flex-end" }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:t.card,borderRadius:"18px 18px 0 0",padding:"20px 20px 40px",maxHeight:"80vh",overflowY:"auto" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
           <div>
-            <div style={{ fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em" }}>{DAY_LABELS[monIdx(day.date)]} · {fmtDate(day.date)}</div>
-            <div style={{ fontSize:16,fontWeight:700,color:"#F1F0EE",marginTop:2 }}>Edit Day</div>
+            <div style={{ fontSize:10,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.1em" }}>{DAY_LABELS[monIdx(day.date)]} · {fmtDate(day.date)}</div>
+            <div style={{ fontSize:16,fontWeight:700,color:t.textPrimary,marginTop:2 }}>Edit Day</div>
           </div>
-          <button onClick={onClose} style={{ background:"#2A2A32",border:"none",color:"#888",width:30,height:30,borderRadius:8,fontSize:16,cursor:"pointer" }}>×</button>
+          <button onClick={onClose} style={{ background:t.cardAlt,border:`1px solid ${t.cardBorder}`,color:t.textMuted,width:30,height:30,borderRadius:8,fontSize:16,cursor:"pointer" }}>×</button>
         </div>
-        <div style={{ fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8 }}>Gym workout</div>
-        <div style={{ display:"flex",gap:8,marginBottom:16 }}>
+        <div style={{ fontSize:11,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8 }}>Gym workout</div>
+        <div style={{ display:"flex",gap:8,marginBottom:10 }}>
           {["none","A","B","C"].map(key=>{
             const g=GYM_DAYS[key]; const active=day.gymDay===key;
+            const col=GYM_DAY_COLORS[key];
             return (
               <button key={key} onClick={()=>onUpdate({gymDay:key})} style={{
                 flex:1,padding:"10px 4px",borderRadius:10,
-                border:`1.5px solid ${active?COLORS.gym:"#2A2A32"}`,
-                background:active?COLORS.gym+"20":"#1A1A20",
-                color:active?COLORS.gym:"#555",cursor:"pointer",fontWeight:600,fontSize:11,
+                border:`1.5px solid ${active?col:t.cardBorder}`,
+                background:active?col+"20":t.inputBg,
+                color:active?col:t.textMuted,cursor:"pointer",fontWeight:600,fontSize:11,
               }}>
                 <div>{key==="none"?"🛌":key}</div>
                 <div style={{ fontSize:9,marginTop:2,opacity:0.8 }}>{key==="none"?"Rest":g.focus}</div>
@@ -374,58 +441,99 @@ function DayEditor({ day, onUpdate, onClose }) {
             );
           })}
         </div>
-        <div style={{ fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8 }}>Activities</div>
-        <div style={{ display:"flex",gap:8 }}>
-          {[{key:"skate",label:"🛼 Skate",color:COLORS.skate},{key:"walk",label:"🚶 Walk",color:COLORS.walk}].map(a=>(
-            <button key={a.key} onClick={()=>onUpdate({[a.key]:!day[a.key]})} style={{
-              flex:1,padding:"10px",borderRadius:10,
-              border:`1.5px solid ${day[a.key]?a.color:"#2A2A32"}`,
-              background:day[a.key]?a.color+"20":"#1A1A20",
-              color:day[a.key]?a.color:"#555",cursor:"pointer",fontWeight:600,fontSize:12,
-            }}>{a.label}</button>
-          ))}
+        <div style={{ fontSize:10,color:GYM_DAY_COLORS[day.gymDay],background:GYM_DAY_COLORS[day.gymDay]+"15",borderRadius:8,padding:"8px 10px",marginBottom:16,lineHeight:1.5 }}>
+          {GYM_DAY_DETAILS[day.gymDay]}
         </div>
+        <div style={{ fontSize:11,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8 }}>Skate session</div>
+        <button onClick={()=>onUpdate({skate:!day.skate})} style={{
+          width:"100%",padding:"10px",borderRadius:10,
+          border:`1.5px solid ${day.skate?COLORS.skate:t.cardBorder}`,
+          background:day.skate?COLORS.skate+"20":t.inputBg,
+          color:day.skate?COLORS.skate:t.textMuted,cursor:"pointer",fontWeight:600,fontSize:12,
+        }}>🛼 {day.skate?"Skate planned":"Add skate session"}</button>
+        <div style={{ fontSize:10,color:t.textFaint,marginTop:10,lineHeight:1.5 }}>💡 Walking and weight are tracked daily — just log them in the Daily tab each day!</div>
       </div>
     </div>
   );
 }
 
-function WeightGraph({ allWeeks }) {
-  const points = allWeeks.map((w,i)=>({
-    wi:i,
-    start:w.checkin.weightStart?parseFloat(w.checkin.weightStart):null,
-    end:w.checkin.weightEnd?parseFloat(w.checkin.weightEnd):null,
-  })).filter(p=>p.end!==null);
-  if (points.length===0) return <div style={{ textAlign:"center",color:"#333",fontSize:12,padding:"24px 0" }}>No weight data yet — fill in your check-ins!</div>;
-  const allVals=points.flatMap(p=>[p.start,p.end].filter(Boolean));
-  const minV=Math.min(...allVals,58)-1,maxV=Math.max(...allVals,70)+1,range=maxV-minV;
-  const W=320,H=120,P={t:12,b:28,l:32,r:16};
+function WeightGraph({ allWeeks, t }) {
+  const points = [];
+  allWeeks.forEach((w,wi)=>{
+    w.days.forEach((d,di)=>{
+      if (d.weight) points.push({ idx: wi*7+di, v: parseFloat(d.weight), wi, di });
+    });
+  });
+  if (points.length===0) return <div style={{ textAlign:"center",color:t.textFaint,fontSize:12,padding:"24px 0" }}>No weight data yet — log it daily!</div>;
+  const totalDays = TOTAL_WEEKS*7;
+  const vals=points.map(p=>p.v);
+  const minV=Math.min(...vals,58)-1,maxV=Math.max(...vals,70)+1,range=maxV-minV;
+  const W=320,H=110,P={t:10,b:18,l:30,r:14};
   const gW=W-P.l-P.r,gH=H-P.t-P.b;
-  const xOf=wi=>P.l+(wi/(TOTAL_WEEKS-1))*gW;
+  const xOf=idx=>P.l+(idx/(totalDays-1))*gW;
   const yOf=v=>P.t+(1-(v-minV)/range)*gH;
-  const endPts=points.map(p=>`${xOf(p.wi)},${yOf(p.end)}`).join(" ");
-  const startPts=points.filter(p=>p.start).map(p=>`${xOf(p.wi)},${yOf(p.start)}`).join(" ");
+  const lineStr=points.map(p=>`${xOf(p.idx)},${yOf(p.v)}`).join(" ");
   const tY=yOf(58);
-  const yTicks=Array.from({length:4},(_,i)=>Math.round(minV+(range/3)*i));
+  const yTicks=Array.from({length:3},(_,i)=>Math.round(minV+(range/2)*i));
+  const labelEvery = Math.max(1, Math.round(TOTAL_WEEKS/5));
   return (
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow:"visible" }}>
       {yTicks.map(v=>(
         <g key={v}>
-          <line x1={P.l} y1={yOf(v)} x2={W-P.r} y2={yOf(v)} stroke="#1E1E28" strokeWidth="1"/>
-          <text x={P.l-4} y={yOf(v)+3} fill="#444" fontSize="7" textAnchor="end">{v}</text>
+          <line x1={P.l} y1={yOf(v)} x2={W-P.r} y2={yOf(v)} stroke={t.divider} strokeWidth="1"/>
+          <text x={P.l-4} y={yOf(v)+3} fill={t.textFaint} fontSize="7" textAnchor="end">{v}</text>
         </g>
       ))}
       {58>=minV&&58<=maxV&&<>
-        <line x1={P.l} y1={tY} x2={W-P.r} y2={tY} stroke="#34D399" strokeWidth="1" strokeDasharray="4,3" opacity="0.5"/>
-        <text x={W-P.r+2} y={tY+3} fill="#34D399" fontSize="7">58</text>
+        <line x1={P.l} y1={tY} x2={W-P.r} y2={tY} stroke="#5FB84B" strokeWidth="1" strokeDasharray="4,3" opacity="0.6"/>
+        <text x={W-P.r+2} y={tY+3} fill="#5FB84B" fontSize="7">58</text>
       </>}
-      {points.filter(p=>p.start).length>1&&<polyline points={startPts} fill="none" stroke={COLORS.accent} strokeWidth="1.5" strokeDasharray="3,3" opacity="0.4"/>}
-      {points.length>1&&<polyline points={endPts} fill="none" stroke={COLORS.accent} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>}
+      {points.length>1&&<polyline points={lineStr} fill="none" stroke={COLORS.accent} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>}
+      {points.length===1&&<circle cx={xOf(points[0].idx)} cy={yOf(points[0].v)} r="3" fill={COLORS.accent}/>}
+      {Array.from({length:TOTAL_WEEKS},(_,wi)=>wi).filter(wi=>wi%labelEvery===0).map(wi=>(
+        <text key={wi} x={xOf(wi*7)} y={H-P.b+10} fill={t.textFaint} fontSize="7" textAnchor="middle">W{wi+1}</text>
+      ))}
+      {points.length>0&&(()=>{
+        const last=points[points.length-1];
+        const lx=xOf(last.idx), ly=yOf(last.v);
+        const labelRight = lx < W*0.75;
+        return (
+          <g>
+            <circle cx={lx} cy={ly} r="4.5" fill={COLORS.accent} stroke={t.card} strokeWidth="2"/>
+            <circle cx={lx} cy={ly} r="8" fill="none" stroke={COLORS.accent} strokeWidth="1" opacity="0.4"/>
+            <rect x={labelRight?lx+8:lx-58} y={ly-19} width={50} height={16} rx={5} fill={t.card} stroke={COLORS.accent} strokeOpacity="0.4" strokeWidth="1"/>
+            <text x={labelRight?lx+33:lx-33} y={ly-8} fill={COLORS.accent} fontSize="9" fontWeight="700" textAnchor="middle">{last.v}kg</text>
+          </g>
+        );
+      })()}
+    </svg>
+  );
+}
+
+function WaistGraph({ allWeeks, t }) {
+  const points = allWeeks.map((w,i)=>({ wi:i, v:w.checkin.waist?parseFloat(w.checkin.waist):null })).filter(p=>p.v!==null);
+  if (points.length===0) return <div style={{ textAlign:"center",color:t.textFaint,fontSize:12,padding:"20px 0" }}>No waist measurements yet</div>;
+  const vals=points.map(p=>p.v);
+  const minV=Math.min(...vals)-1, maxV=Math.max(...vals)+1, range=maxV-minV||1;
+  const W=320,H=90,P={t:10,b:22,l:28,r:14};
+  const gW=W-P.l-P.r,gH=H-P.t-P.b;
+  const xOf=wi=>P.l+(wi/(TOTAL_WEEKS-1))*gW;
+  const yOf=v=>P.t+(1-(v-minV)/range)*gH;
+  const lineStr=points.map(p=>`${xOf(p.wi)},${yOf(p.v)}`).join(" ");
+  const yTicks=Array.from({length:3},(_,i)=>Math.round(minV+(range/2)*i));
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow:"visible" }}>
+      {yTicks.map(v=>(
+        <g key={v}>
+          <line x1={P.l} y1={yOf(v)} x2={W-P.r} y2={yOf(v)} stroke={t.divider} strokeWidth="1"/>
+          <text x={P.l-4} y={yOf(v)+3} fill={t.textFaint} fontSize="7" textAnchor="end">{v}</text>
+        </g>
+      ))}
+      {points.length>1&&<polyline points={lineStr} fill="none" stroke="#EE6A4C" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>}
       {points.map(p=>(
         <g key={p.wi}>
-          {p.start&&<circle cx={xOf(p.wi)} cy={yOf(p.start)} r="2.5" fill="#1A1A20" stroke={COLORS.accent} strokeWidth="1.5" opacity="0.5"/>}
-          <circle cx={xOf(p.wi)} cy={yOf(p.end)} r="3.5" fill={COLORS.accent} stroke="#0F0F12" strokeWidth="1.5"/>
-          <text x={xOf(p.wi)} y={H-P.b+10} fill="#444" fontSize="7" textAnchor="middle">W{p.wi+1}</text>
+          <circle cx={xOf(p.wi)} cy={yOf(p.v)} r="3" fill="#EE6A4C" stroke={t.card} strokeWidth="1.5"/>
+          <text x={xOf(p.wi)} y={H-P.b+10} fill={t.textFaint} fontSize="7" textAnchor="middle">W{p.wi+1}</text>
         </g>
       ))}
     </svg>
@@ -437,25 +545,21 @@ function MiniRecap({ d, gymInfo }) {
   const gymDone=Object.values(d.gymDone||{}).filter(Boolean).length;
   const gC=d.gymDay!=="none"&&gymDone>0?getGymCondition(gymDone,gymInfo.exercises.length,d.gymEffort):null;
   const sC=d.skate&&(d.skateCalories||d.skateMinutes)?getSkateCondition(d.skateCalories,d.skateMinutes,d.skateEffort):null;
-  const wC=d.walk&&d.walkSteps?getWalkCondition(d.walkSteps,d.walkEffort):null;
+  const wC=d.walkSteps?getWalkCondition(d.walkSteps,d.walkEffort):null;
   const parts=[];
-  if (gC)   parts.push({key:"g",color:gC.color,  text:`${gC.emoji} ${gymDone}/${gymInfo.exercises.length} ex`});
-  if (sC)   parts.push({key:"s",color:sC.color,  text:`${sC.emoji} ${d.skateCalories?d.skateCalories+"kcal":d.skateMinutes+"min"}`});
-  if (wC)   parts.push({key:"w",color:wC.color,  text:`${wC.emoji} ${parseInt(d.walkSteps).toLocaleString()} steps`});
+  if (gC) parts.push({key:"g",color:gC.color,text:`${gC.emoji} ${gymDone}/${gymInfo.exercises.length} ex`});
+  if (sC) parts.push({key:"s",color:sC.color,text:`${sC.emoji} ${d.skateCalories?d.skateCalories+"kcal":d.skateMinutes+"min"}`});
+  if (wC) parts.push({key:"w",color:wC.color,text:`${wC.emoji} ${parseInt(d.walkSteps).toLocaleString()} steps`});
   if (d.motivation) parts.push({key:"m",color:COLORS.accent,text:d.motivation});
   if (parts.length===0) return null;
-  return (
-    <div style={{ display:"flex",flexWrap:"wrap",gap:6,fontSize:9,fontWeight:600 }}>
-      {parts.map(p=><span key={p.key} style={{ color:p.color }}>{p.text}</span>)}
-    </div>
-  );
+  return <div style={{ display:"flex",flexWrap:"wrap",gap:6,fontSize:9,fontWeight:600 }}>{parts.map(p=><span key={p.key} style={{ color:p.color }}>{p.text}</span>)}</div>;
 }
 
-function DayRecap({ d, gymInfo }) {
+function DayRecap({ d, gymInfo, t }) {
   const gymDone=Object.values(d.gymDone||{}).filter(Boolean).length;
   const hasGym=d.gymDay!=="none"&&gymInfo.exercises.length>0&&gymDone>0;
   const hasSkate=d.skate&&(d.skateCalories||d.skateMinutes);
-  const hasWalk=d.walk&&d.walkSteps;
+  const hasWalk=!!d.walkSteps;
   if (!hasGym&&!hasSkate&&!hasWalk) return null;
   const gC=hasGym?getGymCondition(gymDone,gymInfo.exercises.length,d.gymEffort):null;
   const sC=hasSkate?getSkateCondition(d.skateCalories,d.skateMinutes,d.skateEffort):null;
@@ -465,17 +569,14 @@ function DayRecap({ d, gymInfo }) {
   const VIBES=["You really showed up today! 🌟","Look at you being consistent! 💪🏻","This is how goals get reached! ✨","Your future self is grateful! 🙏","Another day closer to 58kg! 🎯"];
   const vibe=VIBES[Math.floor((d.date.getDate()+d.date.getMonth())%VIBES.length)];
   return (
-    <div style={{ marginTop:10,background:"#16161E",border:"1px solid #2A2A42",borderRadius:10,padding:"12px 14px" }}>
+    <div style={{ marginTop:10,background:t.cardAlt,border:`1px solid ${t.cardBorder}`,borderRadius:10,padding:"12px 14px" }}>
       <div style={{ fontSize:10,color:COLORS.accent,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:10 }}>✦ Today's Recap</div>
       <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
         {hasGym&&gC&&(
           <div style={{ display:"flex",alignItems:"center",gap:8 }}>
             <span style={{ fontSize:13 }}>🏋️</span>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#DDD",fontWeight:600 }}>
-                Gym — {gymDone}/{gymInfo.exercises.length} exercises
-                {d.gymEffort&&effortOf(d.gymEffort)&&<span style={{ marginLeft:6,fontSize:10,color:effortOf(d.gymEffort).color }}>{effortOf(d.gymEffort).emoji} {d.gymEffort}</span>}
-              </div>
+              <div style={{ fontSize:11,color:t.textBody,fontWeight:600 }}>Gym — {gymDone}/{gymInfo.exercises.length} exercises{d.gymEffort&&effortOf(d.gymEffort)&&<span style={{ marginLeft:6,fontSize:10,color:effortOf(d.gymEffort).color }}>{effortOf(d.gymEffort).emoji} {d.gymEffort}</span>}</div>
               <div style={{ fontSize:10,color:gC.color,marginTop:1 }}>{gC.emoji} {gC.label}</div>
             </div>
           </div>
@@ -484,10 +585,7 @@ function DayRecap({ d, gymInfo }) {
           <div style={{ display:"flex",alignItems:"center",gap:8 }}>
             <span style={{ fontSize:13 }}>🛼</span>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#DDD",fontWeight:600 }}>
-                Skate{d.skateMinutes&&<span style={{ color:"#666" }}> · {d.skateMinutes} min</span>}{d.skateCalories&&<span style={{ color:COLORS.skate }}> · {d.skateCalories} kcal</span>}
-                {d.skateEffort&&effortOf(d.skateEffort)&&<span style={{ marginLeft:6,fontSize:10,color:effortOf(d.skateEffort).color }}>{effortOf(d.skateEffort).emoji} {d.skateEffort}</span>}
-              </div>
+              <div style={{ fontSize:11,color:t.textBody,fontWeight:600 }}>Skate{d.skateMinutes&&<span style={{ color:t.textMuted }}> · {d.skateMinutes} min</span>}{d.skateCalories&&<span style={{ color:COLORS.skate }}> · {d.skateCalories} kcal</span>}{d.skateEffort&&effortOf(d.skateEffort)&&<span style={{ marginLeft:6,fontSize:10,color:effortOf(d.skateEffort).color }}>{effortOf(d.skateEffort).emoji} {d.skateEffort}</span>}</div>
               <div style={{ fontSize:10,color:sC.color,marginTop:1 }}>{sC.emoji} {sC.label}</div>
             </div>
           </div>
@@ -496,22 +594,74 @@ function DayRecap({ d, gymInfo }) {
           <div style={{ display:"flex",alignItems:"center",gap:8 }}>
             <span style={{ fontSize:13 }}>🚶</span>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11,color:"#DDD",fontWeight:600 }}>
-                Walk · {parseInt(d.walkSteps).toLocaleString()} steps
-                {d.walkEffort&&effortOf(d.walkEffort)&&<span style={{ marginLeft:6,fontSize:10,color:effortOf(d.walkEffort).color }}>{effortOf(d.walkEffort).emoji} {d.walkEffort}</span>}
-              </div>
+              <div style={{ fontSize:11,color:t.textBody,fontWeight:600 }}>Walk · {parseInt(d.walkSteps).toLocaleString()} steps{d.walkEffort&&effortOf(d.walkEffort)&&<span style={{ marginLeft:6,fontSize:10,color:effortOf(d.walkEffort).color }}>{effortOf(d.walkEffort).emoji} {d.walkEffort}</span>}</div>
               <div style={{ fontSize:10,color:wC.color,marginTop:1 }}>{wC.emoji} {wC.label}</div>
             </div>
           </div>
         )}
       </div>
-      {allConds.length>=2&&<div style={{ marginTop:10,paddingTop:10,borderTop:"1px solid #2A2A32",fontSize:11,color:"#888",fontStyle:"italic" }}>{vibe}</div>}
+      {allConds.length>=2&&<div style={{ marginTop:10,paddingTop:10,borderTop:`1px solid ${t.divider}`,fontSize:11,color:t.textMuted,fontStyle:"italic" }}>{vibe}</div>}
     </div>
   );
 }
 
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportWeek(w, weekDates) {
+  const lines = [];
+  lines.push(`WEEK ${w.weekNum} — ${fmtDate(weekDates[0])} to ${fmtDate(weekDates[6])}`);
+  lines.push("=".repeat(40));
+  lines.push("");
+  const wLogged = w.days.filter(d=>d.weight);
+  if (wLogged.length>0) {
+    lines.push(`Weight: ${wLogged.map(d=>`${d.weight}kg`).join(" → ")}`);
+    if (wLogged.length>1) {
+      const diff=(parseFloat(wLogged[wLogged.length-1].weight)-parseFloat(wLogged[0].weight)).toFixed(1);
+      lines.push(`Change: ${diff>0?"+":""}${diff} kg`);
+    }
+  } else {
+    lines.push(`Weight: not logged`);
+  }
+  lines.push(`Waist: ${w.checkin.waist||"-"} cm`);
+  lines.push("");
+  lines.push("DAILY LOG");
+  lines.push("-".repeat(40));
+  w.days.forEach((d,i)=>{
+    lines.push(`${DAY_LABELS[i]} ${fmtDate(d.date)}:`);
+    const gymInfo=GYM_DAYS[d.gymDay]||GYM_DAYS.none;
+    if (d.weight) lines.push(`  Weight: ${d.weight} kg`);
+    if (d.gymDay!=="none") {
+      const gymDone=Object.values(d.gymDone||{}).filter(Boolean).length;
+      lines.push(`  Gym (${gymInfo.label}): ${gymDone}/${gymInfo.exercises.length} exercises, effort: ${d.gymEffort||"-"}`);
+    }
+    if (d.skate) lines.push(`  Skate: ${d.skateMinutes||"-"} min, ${d.skateCalories||"-"} kcal, effort: ${d.skateEffort||"-"}`);
+    if (d.walkSteps) lines.push(`  Walk: ${d.walkSteps} steps, effort: ${d.walkEffort||"-"}`);
+    if (d.motivation) lines.push(`  Motivation: ${d.motivation}`);
+    if (d.energy||d.stress||d.moodStability||d.cravings) lines.push(`  Feelings: Energy ${d.energy||"-"}/5, Stress ${d.stress||"-"}/5, Mood ${d.moodStability||"-"}/5, Cravings ${d.cravings||"-"}/5`);
+    if (d.notes) lines.push(`  Notes: ${d.notes}`);
+    lines.push(`  Completed: ${d.completed?"Yes":"No"}`);
+    lines.push("");
+  });
+  lines.push("WEEKLY REFLECTION");
+  lines.push("-".repeat(40));
+  lines.push(`Win: ${w.checkin.win||"-"}`);
+  lines.push(`To improve: ${w.checkin.improve||"-"}`);
+  downloadFile(`week-${w.weekNum}-log.txt`, lines.join("\n"), "text/plain");
+}
+
 /* ══ MAIN ══ */
 function FitnessCalendar() {
+  const [themeMode,      setThemeMode]      = useState("light");
+  const t = THEMES[themeMode];
+
   const [currentWeek,    setCurrentWeek]    = useState(0);
   const [allWeeks,       setAllWeeks]       = useState(()=>Array.from({length:TOTAL_WEEKS},(_,i)=>makeWeek(i)));
   const [activeView,     setActiveView]     = useState("calendar");
@@ -534,330 +684,405 @@ function FitnessCalendar() {
 
   const gym=week.days.filter(d=>d.gymDay!=="none"&&d.completed).length;
   const skate=week.days.filter(d=>d.skate&&d.completed).length;
-  const walk=week.days.filter(d=>d.walk&&d.completed).length;
   const pGym=week.days.filter(d=>d.gymDay!=="none").length;
   const pSkt=week.days.filter(d=>d.skate).length;
-  const pWlk=week.days.filter(d=>d.walk).length;
   const done=week.days.filter(d=>d.completed).length;
-  const weekCond=getWeekCondition(gym,skate,walk);
+  const walkDaysGoalHit=week.days.filter(d=>d.walkSteps&&parseInt(d.walkSteps)>=STEP_GOAL).length;
+  const walkDaysLogged=week.days.filter(d=>d.walkSteps).length;
+  const totalWeekSteps=week.days.reduce((s,d)=>s+(d.walkSteps?parseInt(d.walkSteps):0),0);
+  const weekCond=getWeekCondition(gym,skate,walkDaysGoalHit);
   const effortOf=key=>EFFORT_LEVELS.find(e=>e.key===key);
 
-  const TABS=[{key:"calendar",label:"📅 Week"},{key:"checkin",label:"📊 Check-in"},{key:"progress",label:"📈 Progress"},{key:"pullup",label:"💪 Pull Up"}];
+  const TABS=[{key:"calendar",label:"📅 Daily"},{key:"checkin",label:"📊 Check-in"},{key:"progress",label:"📈 Progress"},{key:"pullup",label:"💪 Pull Up"}];
 
   return (
-    <div style={{ fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,sans-serif",background:"#0F0F12",minHeight:"100vh",color:"#F1F0EE",maxWidth:480,margin:"0 auto",position:"relative" }}>
-      {editingDay!==null&&<DayEditor day={week.days[editingDay]} onUpdate={p=>updateDay(editingDay,p)} onClose={()=>setEditingDay(null)}/>}
+    <div style={{ fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,sans-serif",background:t.bg,minHeight:"100vh",color:t.textPrimary,maxWidth:480,margin:"0 auto",position:"relative",transition:"background 0.25s ease" }}>
+      {editingDay!==null&&<DayEditor day={week.days[editingDay]} onUpdate={p=>updateDay(editingDay,p)} onClose={()=>setEditingDay(null)} t={t}/>}
 
       {/* header */}
-      <div style={{ background:"linear-gradient(135deg,#18181F,#13131A)",padding:"22px 20px 14px",borderBottom:"1px solid #1E1E28",position:"sticky",top:0,zIndex:10 }}>
+      <div style={{ background:t.headerBg,padding:"20px 20px 12px",borderBottom:`1px solid ${t.headerBorder}`,position:"sticky",top:0,zIndex:10 }}>
         <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4 }}>
           <div>
-            <div style={{ fontSize:10,letterSpacing:"0.15em",color:"#555",textTransform:"uppercase" }}>20-Week Plan</div>
-            <h1 style={{ margin:"2px 0 0",fontSize:22,fontWeight:700,letterSpacing:"-0.02em" }}>Week {week.weekNum} <span style={{ color:"#3A3A42",fontWeight:400,fontSize:16 }}>/ 20</span></h1>
-            <div style={{ fontSize:11,color:"#555",marginTop:1 }}>{dateRange}</div>
+            <h1 style={{ margin:0,fontSize:20,fontWeight:700,letterSpacing:"-0.02em",color:t.textPrimary }}>Week {week.weekNum} <span style={{ color:t.textFaint,fontWeight:400,fontSize:14 }}>/ 20</span></h1>
+            <div style={{ fontSize:11,color:t.textMuted,marginTop:2 }}>{dateRange}</div>
           </div>
           <div style={{ display:"flex",gap:6 }}>
-            <button onClick={()=>{setCurrentWeek(w=>Math.max(0,w-1));setSelectedDay(null);}} style={{ width:32,height:32,borderRadius:8,border:"1.5px solid #2A2A32",background:"#1A1A20",color:"#888",cursor:"pointer",fontSize:16 }}>‹</button>
-            <button onClick={()=>{setCurrentWeek(w=>Math.min(TOTAL_WEEKS-1,w+1));setSelectedDay(null);}} style={{ width:32,height:32,borderRadius:8,border:"1.5px solid #2A2A32",background:"#1A1A20",color:"#888",cursor:"pointer",fontSize:16 }}>›</button>
+            <button onClick={()=>setThemeMode(m=>m==="light"?"dark":"light")} title="Toggle day/night mode" style={{ width:32,height:32,borderRadius:8,border:`1.5px solid ${t.cardBorder}`,background:t.card,color:t.textBody,cursor:"pointer",fontSize:14 }}>{themeMode==="light"?"🌙":"☀️"}</button>
+            <button onClick={()=>exportWeek(week, weekDates)} title="Export this week" style={{ width:32,height:32,borderRadius:8,border:`1.5px solid ${t.cardBorder}`,background:t.card,color:t.textBody,cursor:"pointer",fontSize:14 }}>⬇</button>
+            <button onClick={()=>{setCurrentWeek(w=>Math.max(0,w-1));setSelectedDay(null);}} style={{ width:32,height:32,borderRadius:8,border:`1.5px solid ${t.cardBorder}`,background:t.card,color:t.textBody,cursor:"pointer",fontSize:16 }}>‹</button>
+            <button onClick={()=>{setCurrentWeek(w=>Math.min(TOTAL_WEEKS-1,w+1));setSelectedDay(null);}} style={{ width:32,height:32,borderRadius:8,border:`1.5px solid ${t.cardBorder}`,background:t.card,color:t.textBody,cursor:"pointer",fontSize:16 }}>›</button>
           </div>
         </div>
-        <div style={{ display:"flex",gap:6,marginTop:12 }}>
+        <div style={{ display:"flex",gap:6,marginTop:10 }}>
           {TABS.map(tab=>(
             <button key={tab.key} onClick={()=>{setActiveView(tab.key);setSelectedDay(null);}} style={{
               flex:1,padding:"7px 2px",borderRadius:8,fontSize:10,fontWeight:600,
-              border:`1.5px solid ${activeView===tab.key?COLORS.accent:"#2A2A32"}`,
-              background:activeView===tab.key?COLORS.accent+"18":"#1A1A20",
-              color:activeView===tab.key?COLORS.accent:"#555",cursor:"pointer",transition:"all 0.15s",
+              border:`1.5px solid ${activeView===tab.key?COLORS.accent:t.cardBorder}`,
+              background:activeView===tab.key?COLORS.accent+"18":t.card,
+              color:activeView===tab.key?COLORS.accent:t.textMuted,cursor:"pointer",transition:"all 0.15s",
             }}>{tab.label}</button>
           ))}
         </div>
       </div>
 
-      {/* ══ CALENDAR ══ */}
+      {/* ══ DAILY (calendar) ══ */}
       {activeView==="calendar"&&(
-        <div style={{ padding:"16px 20px 32px" }}>
-          {/* weekly summary card */}
-          <div style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:"12px 14px",marginBottom:14 }}>
-            <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10 }}>
-              <div>
-                <div style={{ fontSize:11,color:"#888",fontWeight:600 }}>This week's activity</div>
-                <div style={{ fontSize:10,color:"#555",marginTop:1 }}>{done===0?"No activities logged yet":`${gym+skate+walk} ${gym+skate+walk===1?"activity":"activities"} done · ${done}/7 days complete`}</div>
-              </div>
-              {weekCond&&<span style={{ fontSize:10,fontWeight:700,color:weekCond.color,background:weekCond.color+"18",borderRadius:6,padding:"2px 8px" }}>{weekCond.label}</span>}
+        <div style={{ padding:"14px 20px 28px" }}>
+          {/* simplified weekly summary */}
+          <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:12,padding:"11px 14px",marginBottom:12 }}>
+            <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
+              <div style={{ fontSize:11,color:t.textMuted,fontWeight:600 }}>This week</div>
+              {weekCond&&<span style={{ fontSize:10,fontWeight:700,color:weekCond.color }}>{weekCond.label}</span>}
             </div>
             <div style={{ display:"flex",gap:8 }}>
-              {[
-                {label:"Gym",  done:gym,  total:pGym,color:COLORS.gym,  icon:"🏋️",tip:gym===0?"Not started yet":gym===pGym?"Full week! 👑":`${gym}/${pGym} sessions`},
-                {label:"Skate",done:skate,total:pSkt,color:COLORS.skate,icon:"🛼", tip:skate===0?"Not yet":skate>=2?"Great! 🔥":`${skate}/${pSkt} sessions`},
-                {label:"Walk", done:walk, total:pWlk,color:COLORS.walk, icon:"🚶", tip:walk===0?"Not yet":walk>=3?"Crushing it! ⭐":walk>=2?"Good! 🌸":`${walk}/${pWlk} walks`},
-              ].map(s=>(
-                <div key={s.label} style={{ flex:1,background:"#13131A",borderRadius:10,padding:"10px 8px",border:`1px solid ${s.done>0?s.color+"30":"#1E1E28"}`,textAlign:"center" }}>
-                  <div style={{ fontSize:14,marginBottom:2 }}>{s.icon}</div>
-                  <div style={{ fontSize:20,fontWeight:700,color:s.done>0?s.color:"#333",lineHeight:1 }}>{s.done}<span style={{ fontSize:11,color:"#333" }}>/{s.total}</span></div>
-                  <div style={{ fontSize:9,color:s.done>0?s.color+"AA":"#333",marginTop:3,lineHeight:1.2 }}>{s.tip}</div>
-                </div>
-              ))}
+              <div style={{ flex:1,textAlign:"center" }}>
+                <div style={{ fontSize:16,fontWeight:700,color:gym>0?COLORS.gym:t.textFaint }}>{gym}<span style={{ fontSize:10,color:t.textFaint }}>/{pGym}</span></div>
+                <div style={{ fontSize:9,color:t.textMuted }}>🏋️ Gym</div>
+              </div>
+              <div style={{ flex:1,textAlign:"center" }}>
+                <div style={{ fontSize:16,fontWeight:700,color:skate>0?COLORS.skate:t.textFaint }}>{skate}<span style={{ fontSize:10,color:t.textFaint }}>/{pSkt}</span></div>
+                <div style={{ fontSize:9,color:t.textMuted }}>🛼 Skate</div>
+              </div>
+              <div style={{ flex:1,textAlign:"center" }}>
+                <div style={{ fontSize:16,fontWeight:700,color:walkDaysGoalHit>0?COLORS.walk:t.textFaint }}>{walkDaysGoalHit}<span style={{ fontSize:10,color:t.textFaint }}>/7</span></div>
+                <div style={{ fontSize:9,color:t.textMuted }}>🚶 Goal days</div>
+              </div>
             </div>
           </div>
 
           {/* day rows */}
-          <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:7 }}>
             {week.days.map((d,i)=>{
               const gymInfo=GYM_DAYS[d.gymDay]||GYM_DAYS.none;
-              const isRest=d.gymDay==="none"&&!d.skate&&!d.walk;
               const isSel=selectedDay===i;
-              const accent=d.gymDay!=="none"?COLORS.gym:d.skate?COLORS.skate:d.walk?COLORS.walk:COLORS.rest;
+              const isRest=d.gymDay==="none"&&!d.skate;
+              const accent=d.gymDay!=="none"?GYM_DAY_COLORS[d.gymDay]:d.skate?COLORS.skate:COLORS.rest;
               return (
                 <div key={i}>
-                  <div style={{ background:d.completed?"#141A14":"#1A1A20",border:`1.5px solid ${isSel?accent:d.completed?"#1A2A1A":"#1E1E28"}`,borderRadius:isSel?"12px 12px 0 0":12,padding:"11px 12px",display:"flex",alignItems:"center",gap:10,transition:"all 0.15s" }}>
-                    <div style={{ width:38,flexShrink:0,textAlign:"center" }}>
-                      <div style={{ fontSize:10,fontWeight:700,color:"#444",textTransform:"uppercase" }}>{DAY_LABELS[monIdx(d.date)]}</div>
-                      <div style={{ fontSize:15,fontWeight:700,color:isSel?accent:"#777",lineHeight:1.2 }}>{d.date.getDate()}</div>
+                  <div style={{ background:isRest?t.restBg:d.completed?t.completeBg:t.card,border:`1.5px solid ${d.completed?"#5FB84B":accent}`,borderRadius:isSel?"12px 12px 0 0":12,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,transition:"all 0.15s" }}>
+                    <div style={{ width:36,flexShrink:0,textAlign:"center" }}>
+                      <div style={{ fontSize:9,fontWeight:700,color:t.textFaint,textTransform:"uppercase" }}>{DAY_LABELS[monIdx(d.date)]}</div>
+                      <div style={{ fontSize:14,fontWeight:700,color:d.completed?"#5FB84B":accent }}>{d.date.getDate()}</div>
                     </div>
                     <div style={{ flex:1,display:"flex",flexDirection:"column",gap:3,cursor:"pointer" }} onClick={()=>setSelectedDay(isSel?null:i)}>
                       <div style={{ display:"flex",flexWrap:"wrap",gap:4,alignItems:"center" }}>
-                        {d.gymDay!=="none"&&<Pill color={COLORS.gym} label={`${gymInfo.label} · ${gymInfo.focus}`}/>}
+                        {d.gymDay!=="none"&&<Pill color={GYM_DAY_COLORS[d.gymDay]} label={`${gymInfo.label}`}/>}
                         {d.skate&&<Pill color={COLORS.skate} label="Skate 🛼"/>}
-                        {d.walk&&<Pill color={COLORS.walk} label="Walk 🚶"/>}
-                        {isRest&&<span style={{ fontSize:11,color:"#333" }}>Rest day</span>}
-                        {d.gymDay!=="none"&&d.gymEffort&&effortOf(d.gymEffort)&&<span style={{ fontSize:9,color:effortOf(d.gymEffort).color }}>{effortOf(d.gymEffort).emoji}</span>}
-                        {d.skate&&d.skateEffort&&effortOf(d.skateEffort)&&<span style={{ fontSize:9,color:effortOf(d.skateEffort).color }}>{effortOf(d.skateEffort).emoji}</span>}
-                        {d.walk&&d.walkEffort&&effortOf(d.walkEffort)&&<span style={{ fontSize:9,color:effortOf(d.walkEffort).color }}>{effortOf(d.walkEffort).emoji}</span>}
-                        {d.motivation&&<span style={{ fontSize:14 }}>{d.motivation}</span>}
+                        {isRest&&<Pill color={COLORS.rest} label="Rest 🌙"/>}
+                        {d.walkSteps&&<span style={{ fontSize:9,color:COLORS.walk }}>🚶 {parseInt(d.walkSteps).toLocaleString()}</span>}
+                        {d.weight&&<span style={{ fontSize:9,color:COLORS.accent }}>⚖️ {d.weight}kg</span>}
+                        {d.motivation&&<span style={{ fontSize:13 }}>{d.motivation}</span>}
                       </div>
                       <MiniRecap d={d} gymInfo={gymInfo}/>
                     </div>
-                    <button onClick={e=>{e.stopPropagation();setEditingDay(i);}} style={{ width:26,height:26,borderRadius:6,flexShrink:0,border:"1px solid #2A2A32",background:"#1E1E28",color:"#555",cursor:"pointer",fontSize:12 }}>✎</button>
-                    <div onClick={e=>{e.stopPropagation();updateDay(i,{completed:!d.completed});}} style={{ width:22,height:22,borderRadius:"50%",flexShrink:0,border:`2px solid ${d.completed?"#34D399":"#2A2A32"}`,background:d.completed?"#34D39920":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#34D399",cursor:"pointer" }}>{d.completed?"✓":""}</div>
+                    <button onClick={e=>{e.stopPropagation();setEditingDay(i);}} style={{ width:24,height:24,borderRadius:6,flexShrink:0,border:`1px solid ${t.cardBorder}`,background:t.inputBg,color:t.textMuted,cursor:"pointer",fontSize:11 }}>✎</button>
+                    <div onClick={e=>{e.stopPropagation();updateDay(i,{completed:!d.completed});}} style={{ width:20,height:20,borderRadius:"50%",flexShrink:0,border:`2px solid ${d.completed?"#5FB84B":t.cardBorder}`,background:d.completed?"#5FB84B20":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#5FB84B",cursor:"pointer" }}>{d.completed?"✓":""}</div>
                   </div>
 
                   {isSel&&(
-                    <div style={{ background:"#131318",border:`1.5px solid ${accent}`,borderTop:"none",borderRadius:"0 0 12px 12px",padding:"14px 14px 16px" }}>
-                      {/* GYM */}
-                      {d.gymDay!=="none"&&gymInfo.exercises.length>0&&(
-                        <div style={{ marginBottom:14 }}>
-                          <div style={{ fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6 }}>{gymInfo.label} — {gymInfo.focus}</div>
-                          <div style={{ marginBottom:10 }}>
-                            <div style={{ fontSize:9,color:"#555",marginBottom:5 }}>Today's effort</div>
-                            <EffortPicker value={d.gymEffort} onChange={v=>updateDay(i,{gymEffort:v})}/>
-                          </div>
-                          <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
-                            {gymInfo.exercises.map((ex,ei)=>{
-                              const exDone=d.gymDone?.[ei]||false;
-                              const isPU=ex==="Dead Hang"||ex==="Negative Pull Up";
-                              return (
-                                <div key={ei} onClick={()=>updateDay(i,{gymDone:{...d.gymDone,[ei]:!exDone}})} style={{ display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:8,background:exDone?"#1A2A1A":"#1A1A22",border:`1px solid ${exDone?"#34D39930":"#2A2A32"}`,cursor:"pointer",opacity:exDone?0.55:1,transition:"all 0.1s" }}>
-                                  <div style={{ width:18,height:18,borderRadius:5,flexShrink:0,border:`1.5px solid ${exDone?"#34D399":"#3A3A42"}`,background:exDone?"#34D399":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff" }}>{exDone?"✓":""}</div>
-                                  <span style={{ fontSize:12,color:exDone?"#555":"#DDD",flex:1 }}>{ex}</span>
-                                  {isPU&&<span style={{ fontSize:9,color:COLORS.pullup,fontWeight:700 }}>PULL UP</span>}
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <ConditionBadge condition={getGymCondition(Object.values(d.gymDone||{}).filter(Boolean).length,gymInfo.exercises.length,d.gymEffort)}/>
+                    <div style={{ background:t.cardAlt,border:`1.5px solid ${d.completed?"#5FB84B":accent}`,borderTop:"none",borderRadius:"0 0 12px 12px",padding:"14px 14px 16px" }}>
+                      {/* WEIGHT */}
+                      <div style={{ marginBottom:10,background:COLORS.accent+"12",border:`1px solid ${COLORS.accent}30`,borderRadius:10,padding:"10px 12px" }}>
+                        <div style={{ fontSize:9,color:COLORS.accent,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:6 }}>⚖️ Today's weight (optional)</div>
+                        <div style={{ display:"flex",alignItems:"center",background:t.inputBg,border:`1px solid ${t.inputBorder}`,borderRadius:8,overflow:"hidden" }}>
+                          <input type="number" placeholder="e.g. 68.5" value={d.weight} onChange={e=>updateDay(i,{weight:e.target.value})} onClick={e=>e.stopPropagation()} style={{ flex:1,background:"transparent",border:"none",color:t.textPrimary,fontSize:14,padding:"8px 10px",outline:"none",fontFamily:"inherit",fontWeight:600 }}/>
+                          <span style={{ fontSize:10,color:t.textFaint,paddingRight:10 }}>kg</span>
                         </div>
-                      )}
-                      {/* SKATE */}
-                      {d.skate&&(
-                        <div style={{ marginBottom:14,background:"#1A1428",border:`1px solid ${COLORS.skate}30`,borderRadius:10,padding:"12px" }}>
-                          <div style={{ fontSize:10,color:COLORS.skate,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:10 }}>🛼 Skate Session</div>
-                          <div style={{ marginBottom:10 }}><div style={{ fontSize:9,color:"#555",marginBottom:5 }}>Effort level</div><EffortPicker value={d.skateEffort} onChange={v=>updateDay(i,{skateEffort:v})}/></div>
-                          <div style={{ fontSize:9,color:"#555",marginBottom:6 }}>From Garmin</div>
-                          <div style={{ display:"flex",gap:8 }}>
-                            <GarminInput icon="⏱" label="Duration" value={d.skateMinutes} onChange={v=>updateDay(i,{skateMinutes:v})} placeholder="38" unit="min"/>
-                            <GarminInput icon="🔥" label="Calories" value={d.skateCalories} onChange={v=>updateDay(i,{skateCalories:v})} placeholder="337" unit="kcal"/>
-                          </div>
-                          <ConditionBadge condition={getSkateCondition(d.skateCalories,d.skateMinutes,d.skateEffort)}/>
-                        </div>
-                      )}
-                      {/* WALK */}
-                      {d.walk&&(
-                        <div style={{ marginBottom:14,background:"#141A14",border:`1px solid ${COLORS.walk}30`,borderRadius:10,padding:"12px" }}>
-                          <div style={{ fontSize:10,color:COLORS.walk,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:10 }}>🚶 Walk</div>
-                          <div style={{ marginBottom:10 }}><div style={{ fontSize:9,color:"#555",marginBottom:5 }}>Effort level</div><EffortPicker value={d.walkEffort} onChange={v=>updateDay(i,{walkEffort:v})}/></div>
-                          <div style={{ fontSize:9,color:"#555",marginBottom:6 }}>From Garmin</div>
-                          <GarminInput icon="👟" label="Steps" value={d.walkSteps} onChange={v=>updateDay(i,{walkSteps:v})} placeholder="8000" unit="steps"/>
-                          <ConditionBadge condition={getWalkCondition(d.walkSteps,d.walkEffort)}/>
-                        </div>
-                      )}
-                      {/* MOTIVATION */}
-                      <div style={{ marginBottom:12 }}>
-                        <div style={{ fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6 }}>Today's motivation</div>
-                        <div style={{ display:"flex",gap:6 }}>
-                          {MOTIVATION_EMOJIS.map(m=>{
-                            const active=d.motivation===m.key;
+                      </div>
+                      {/* DAILY RATINGS */}
+                      <div style={{ marginBottom:12,background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:10,padding:"10px 12px" }}>
+                        <div style={{ fontSize:9,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:8 }}>How are you feeling?</div>
+                        <div style={{ display:"flex",gap:6 }} onClick={e=>e.stopPropagation()}>
+                          {Object.keys(RATING_ICONS).map(key=>{
+                            const icons=RATING_ICONS[key];
+                            const val=d[key]||0;
                             return (
-                              <button key={m.key} onClick={()=>updateDay(i,{motivation:active?"":m.key})} style={{ flex:1,padding:"8px 2px",borderRadius:8,fontSize:18,cursor:"pointer",border:`1.5px solid ${active?COLORS.accent:"#2A2A32"}`,background:active?COLORS.accent+"20":"#1A1A22",transition:"all 0.15s" }}>
-                                <div>{m.key}</div>
-                                <div style={{ fontSize:8,color:active?COLORS.accent:"#444",marginTop:2 }}>{m.label}</div>
+                              <button key={key} onClick={()=>updateDay(i,{[key]: val>=5?0:val+1})} style={{
+                                flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                                padding:"7px 2px",borderRadius:8,cursor:"pointer",
+                                border:`1.5px solid ${val>0?icons.color+"50":t.cardBorder}`,
+                                background:val>0?icons.color+"12":t.inputBg,
+                              }}>
+                                <span style={{ fontSize:15 }}>{val>0?icons.filled:icons.empty}</span>
+                                <span style={{ fontSize:9,fontWeight:700,color:val>0?icons.color:t.textFaint }}>{val>0?val:"–"}</span>
+                                <span style={{ fontSize:7,color:t.textFaint,textTransform:"uppercase",letterSpacing:"0.04em" }}>{RATING_LABELS[key]}</span>
                               </button>
                             );
                           })}
                         </div>
                       </div>
-                      <textarea placeholder="How did it feel? What did you eat? Any notes..." value={d.notes} onChange={e=>updateDay(i,{notes:e.target.value})} onClick={e=>e.stopPropagation()} style={{ width:"100%",minHeight:48,background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:8,color:"#AAA",fontSize:12,padding:"8px 10px",resize:"none",outline:"none",boxSizing:"border-box",fontFamily:"inherit",lineHeight:1.5 }}/>
-                      <DayRecap d={d} gymInfo={gymInfo}/>
-                      <button onClick={()=>updateDay(i,{completed:!d.completed})} style={{ width:"100%",marginTop:10,padding:"10px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",border:`1.5px solid ${d.completed?"#34D399":"#3A3A42"}`,background:d.completed?"#34D39920":"#1E1E28",color:d.completed?"#34D399":"#666",transition:"all 0.15s" }}>{d.completed?"✓ Day Complete!":"Mark Day Complete"}</button>
+                      {/* GYM */}
+                      {d.gymDay!=="none"&&gymInfo.exercises.length>0&&(
+                        <div style={{ marginBottom:14 }}>
+                          <div style={{ fontSize:10,color:GYM_DAY_COLORS[d.gymDay],textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:3 }}>{gymInfo.label} — {gymInfo.focus}</div>
+                          <div style={{ fontSize:10,color:t.textMuted,marginBottom:8 }}>{GYM_DAY_DETAILS[d.gymDay]}</div>
+                          <div style={{ marginBottom:10 }}><div style={{ fontSize:9,color:t.textMuted,marginBottom:5 }}>Today's effort</div><EffortPicker value={d.gymEffort} onChange={v=>updateDay(i,{gymEffort:v})} t={t}/></div>
+                          <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+                            {gymInfo.exercises.map((ex,ei)=>{
+                              const exDone=d.gymDone?.[ei]||false;
+                              const isPU=ex==="Dead Hang"||ex==="Negative Pull Up";
+                              return (
+                                <div key={ei} onClick={()=>updateDay(i,{gymDone:{...d.gymDone,[ei]:!exDone}})} style={{ display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:8,background:exDone?GYM_DAY_COLORS[d.gymDay]+"15":t.inputBg,border:`1px solid ${exDone?GYM_DAY_COLORS[d.gymDay]+"40":t.cardBorder}`,cursor:"pointer",opacity:exDone?0.6:1 }}>
+                                  <div style={{ width:18,height:18,borderRadius:5,flexShrink:0,border:`1.5px solid ${exDone?GYM_DAY_COLORS[d.gymDay]:t.textFaint}`,background:exDone?GYM_DAY_COLORS[d.gymDay]:"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff" }}>{exDone?"✓":""}</div>
+                                  <span style={{ fontSize:12,color:exDone?t.textFaint:t.textBody,flex:1 }}>{ex}</span>
+                                  {isPU&&<span style={{ fontSize:9,color:COLORS.pullup,fontWeight:700 }}>PULL UP</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <ConditionBadge condition={getGymCondition(Object.values(d.gymDone||{}).filter(Boolean).length,gymInfo.exercises.length,d.gymEffort)} t={t}/>
+                        </div>
+                      )}
+                      {/* SKATE */}
+                      {d.skate&&(
+                        <div style={{ marginBottom:14,background:COLORS.skate+"10",border:`1px solid ${COLORS.skate}30`,borderRadius:10,padding:"12px" }}>
+                          <div style={{ fontSize:10,color:COLORS.skate,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:10 }}>🛼 Skate Session</div>
+                          <div style={{ marginBottom:10 }}><div style={{ fontSize:9,color:t.textMuted,marginBottom:5 }}>Effort level</div><EffortPicker value={d.skateEffort} onChange={v=>updateDay(i,{skateEffort:v})} t={t}/></div>
+                          <div style={{ fontSize:9,color:t.textMuted,marginBottom:6 }}>From Garmin</div>
+                          <div style={{ display:"flex",gap:8 }}>
+                            <GarminInput icon="⏱" label="Duration" value={d.skateMinutes} onChange={v=>updateDay(i,{skateMinutes:v})} placeholder="38" unit="min" t={t}/>
+                            <GarminInput icon="🔥" label="Calories" value={d.skateCalories} onChange={v=>updateDay(i,{skateCalories:v})} placeholder="337" unit="kcal" t={t}/>
+                          </div>
+                          <ConditionBadge condition={getSkateCondition(d.skateCalories,d.skateMinutes,d.skateEffort)} t={t}/>
+                        </div>
+                      )}
+                      {/* WALK */}
+                      <div style={{ marginBottom:14,background:COLORS.walk+"10",border:`1px solid ${COLORS.walk}30`,borderRadius:10,padding:"12px" }}>
+                        <div style={{ fontSize:10,color:COLORS.walk,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:10 }}>🚶 Daily Steps</div>
+                        <div style={{ marginBottom:10 }}><div style={{ fontSize:9,color:t.textMuted,marginBottom:5 }}>Effort level</div><EffortPicker value={d.walkEffort} onChange={v=>updateDay(i,{walkEffort:v})} t={t}/></div>
+                        <div style={{ fontSize:9,color:t.textMuted,marginBottom:6 }}>From Garmin · goal: {STEP_GOAL.toLocaleString()}/day</div>
+                        <GarminInput icon="👟" label="Steps" value={d.walkSteps} onChange={v=>updateDay(i,{walkSteps:v})} placeholder="8000" unit="steps" t={t}/>
+                        <ConditionBadge condition={getWalkCondition(d.walkSteps,d.walkEffort)} t={t}/>
+                      </div>
+                      {/* MOTIVATION */}
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:9,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6 }}>Today's motivation</div>
+                        <div style={{ display:"flex",gap:6 }}>
+                          {MOTIVATION_EMOJIS.map(m=>{
+                            const active=d.motivation===m.key;
+                            return (
+                              <button key={m.key} onClick={()=>updateDay(i,{motivation:active?"":m.key})} style={{ flex:1,padding:"8px 2px",borderRadius:8,fontSize:18,cursor:"pointer",border:`1.5px solid ${active?COLORS.accent:t.cardBorder}`,background:active?COLORS.accent+"20":t.inputBg }}>
+                                <div>{m.key}</div>
+                                <div style={{ fontSize:8,color:active?COLORS.accent:t.textFaint,marginTop:2 }}>{m.label}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <textarea placeholder="How did it feel? What did you eat?..." value={d.notes} onChange={e=>updateDay(i,{notes:e.target.value})} onClick={e=>e.stopPropagation()} style={{ width:"100%",minHeight:44,background:t.inputBg,border:`1px solid ${t.inputBorder}`,borderRadius:8,color:t.textBody,fontSize:12,padding:"8px 10px",resize:"none",outline:"none",boxSizing:"border-box",fontFamily:"inherit",lineHeight:1.5 }}/>
+                      <DayRecap d={d} gymInfo={gymInfo} t={t}/>
+                      <button onClick={()=>updateDay(i,{completed:!d.completed})} style={{ width:"100%",marginTop:10,padding:"10px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",border:`1.5px solid ${d.completed?"#5FB84B":t.cardBorder}`,background:d.completed?"#5FB84B20":t.inputBg,color:d.completed?"#5FB84B":t.textMuted }}>{d.completed?"✓ Day Complete!":"Mark Day Complete"}</button>
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-
-          {/* week progress */}
-          <div style={{ marginTop:16 }}>
-            <div style={{ display:"flex",justifyContent:"space-between",marginBottom:5 }}>
-              <span style={{ fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.08em" }}>Week completion</span>
-              <span style={{ fontSize:11,color:COLORS.accent,fontWeight:600 }}>{done}/7</span>
-            </div>
-            <div style={{ height:4,background:"#1E1E28",borderRadius:2 }}>
-              <div style={{ height:"100%",borderRadius:2,background:`linear-gradient(90deg,${COLORS.accent},#F472B6)`,width:`${(done/7)*100}%`,transition:"width 0.4s ease" }}/>
-            </div>
-          </div>
         </div>
       )}
 
       {/* ══ CHECK-IN ══ */}
       {activeView==="checkin"&&(
-        <div style={{ padding:"16px 20px 32px" }}>
-          <div style={{ fontSize:13,color:"#666",lineHeight:1.6,marginBottom:16 }}>Week {week.weekNum} check-in · <span style={{ color:COLORS.accent }}>{dateRange}</span></div>
+        <div style={{ padding:"14px 20px 28px" }}>
+          <div style={{ fontSize:12,color:t.textMuted,lineHeight:1.6,marginBottom:14 }}>Week {week.weekNum} · <span style={{ color:COLORS.accent }}>{dateRange}</span></div>
 
-          {/* weight */}
-          <div style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:14,marginBottom:12 }}>
-            <div style={{ fontSize:11,color:"#888",fontWeight:500,marginBottom:12 }}>⚖️ Weekly Weight</div>
-            <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:10,color:"#555",marginBottom:5 }}>Day 1 · {fmtDate(weekDates[0])}</div>
-                <input type="number" placeholder="e.g. 69.0" value={week.checkin.weightStart} onChange={e=>updateCheckin("weightStart",e.target.value)} style={{ width:"100%",background:"#13131A",border:"1px solid #2A2A32",borderRadius:8,color:"#DDD",fontSize:14,padding:"9px 10px",outline:"none",boxSizing:"border-box",fontFamily:"inherit",fontWeight:600 }}/>
-                <div style={{ fontSize:9,color:"#444",marginTop:4 }}>kg · start of week</div>
-              </div>
-              <div style={{ display:"flex",flexDirection:"column",alignItems:"center",paddingTop:22 }}>
-                {(()=>{ const s=parseFloat(week.checkin.weightStart),e=parseFloat(week.checkin.weightEnd); const diff=(!isNaN(s)&&!isNaN(e)&&week.checkin.weightStart&&week.checkin.weightEnd)?(e-s).toFixed(1):null; return diff!==null?<div style={{ fontSize:12,fontWeight:700,color:parseFloat(diff)<0?"#34D399":parseFloat(diff)>0?"#F87171":"#888",background:parseFloat(diff)<0?"#34D39915":parseFloat(diff)>0?"#F8717115":"#2A2A32",border:`1px solid ${parseFloat(diff)<0?"#34D39940":parseFloat(diff)>0?"#F8717140":"#3A3A42"}`,borderRadius:8,padding:"6px 8px",textAlign:"center",whiteSpace:"nowrap" }}>{parseFloat(diff)>0?"+":""}{diff} kg</div>:<div style={{ fontSize:16,color:"#2A2A32" }}>→</div>; })()}
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:10,color:"#555",marginBottom:5 }}>Day 7 · {fmtDate(weekDates[6])}</div>
-                <input type="number" placeholder="e.g. 68.4" value={week.checkin.weightEnd} onChange={e=>updateCheckin("weightEnd",e.target.value)} style={{ width:"100%",background:"#13131A",border:"1px solid #2A2A32",borderRadius:8,color:"#DDD",fontSize:14,padding:"9px 10px",outline:"none",boxSizing:"border-box",fontFamily:"inherit",fontWeight:600 }}/>
-                <div style={{ fontSize:9,color:"#444",marginTop:4 }}>kg · end of week</div>
-              </div>
-            </div>
+          {/* weight — auto-summarized from daily logs */}
+          <div style={{ background:COLORS.accent+"10",border:`1px solid ${COLORS.accent}30`,borderRadius:12,padding:14,marginBottom:12 }}>
+            <div style={{ fontSize:11,color:COLORS.accent,fontWeight:600,marginBottom:8 }}>⚖️ Weight this week</div>
+            {(()=>{
+              const logged = week.days.filter(d=>d.weight);
+              if (logged.length===0) return <div style={{ fontSize:11,color:t.textMuted }}>No weight logged yet — add it on any day 💡</div>;
+              const first = parseFloat(logged[0].weight);
+              const last  = parseFloat(logged[logged.length-1].weight);
+              const diff  = (last-first).toFixed(1);
+              return (
+                <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                  <span style={{ fontSize:15,color:t.textBody }}>{first} kg</span>
+                  {logged.length>1&&<><span style={{ fontSize:11,color:t.textFaint }}>→</span><span style={{ fontSize:16,fontWeight:700,color:COLORS.accent }}>{last} kg</span>
+                    <span style={{ fontSize:11,fontWeight:700,color:parseFloat(diff)<0?"#5FB84B":parseFloat(diff)>0?"#E0584A":t.textMuted,background:(parseFloat(diff)<0?"#5FB84B":parseFloat(diff)>0?"#E0584A":t.textMuted)+"18",borderRadius:6,padding:"2px 6px" }}>{parseFloat(diff)>0?"+":""}{diff}</span></>}
+                  <span style={{ fontSize:9,color:t.textFaint,marginLeft:"auto" }}>{logged.length}/7 days</span>
+                </div>
+              );
+            })()}
           </div>
 
           {/* waist */}
-          <div style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:"13px 14px",marginBottom:12 }}>
-            <div style={{ fontSize:11,color:"#888",marginBottom:8,fontWeight:500 }}>📏 Waist measurement</div>
-            <div style={{ display:"flex",alignItems:"center",background:"#13131A",border:"1px solid #2A2A32",borderRadius:8,overflow:"hidden" }}>
-              <input type="number" placeholder="e.g. 72" value={week.checkin.waist} onChange={e=>updateCheckin("waist",e.target.value)} style={{ flex:1,background:"transparent",border:"none",color:"#DDD",fontSize:14,padding:"9px 10px",outline:"none",fontFamily:"inherit",fontWeight:600 }}/>
-              <span style={{ fontSize:11,color:"#444",paddingRight:12 }}>cm</span>
+          <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:12,padding:"13px 14px",marginBottom:12 }}>
+            <div style={{ fontSize:11,color:t.textMuted,marginBottom:8,fontWeight:500 }}>📏 Waist measurement</div>
+            <div style={{ display:"flex",alignItems:"center",background:t.inputBg,border:`1px solid ${t.inputBorder}`,borderRadius:8,overflow:"hidden" }}>
+              <input type="number" placeholder="e.g. 72" value={week.checkin.waist} onChange={e=>updateCheckin("waist",e.target.value)} style={{ flex:1,background:"transparent",border:"none",color:t.textPrimary,fontSize:14,padding:"9px 10px",outline:"none",fontFamily:"inherit",fontWeight:600 }}/>
+              <span style={{ fontSize:11,color:t.textFaint,paddingRight:12 }}>cm</span>
             </div>
           </div>
 
-          {/* motivation weekly */}
-          <div style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:"12px 14px",marginBottom:12 }}>
-            <div style={{ fontSize:11,color:"#888",fontWeight:500,marginBottom:8 }}>💫 Motivation this week</div>
-            <div style={{ display:"flex",gap:6,marginBottom:8 }}>
-              {week.days.map((d,i)=>(
-                <div key={i} style={{ flex:1,textAlign:"center" }}>
-                  <div style={{ fontSize:9,color:"#444",marginBottom:3 }}>{DAY_LABELS[i].slice(0,1)}</div>
-                  <div style={{ fontSize:16 }}>{d.motivation||"·"}</div>
+          {/* walk rollup */}
+          <div style={{ background:COLORS.walk+"10",border:`1px solid ${COLORS.walk}30`,borderRadius:12,padding:"13px 14px",marginBottom:12 }}>
+            <div style={{ fontSize:11,color:COLORS.walk,marginBottom:8,fontWeight:600 }}>🚶 Walking — auto-tracked</div>
+            <div style={{ display:"flex",gap:14 }}>
+              <div>
+                <div style={{ fontSize:18,fontWeight:700,color:COLORS.walk }}>{walkDaysGoalHit}<span style={{ fontSize:11,color:t.textFaint }}>/7</span></div>
+                <div style={{ fontSize:9,color:t.textMuted }}>days hit {STEP_GOAL.toLocaleString()} goal</div>
+              </div>
+              <div>
+                <div style={{ fontSize:18,fontWeight:700,color:COLORS.walk }}>{totalWeekSteps.toLocaleString()}</div>
+                <div style={{ fontSize:9,color:t.textMuted }}>total steps this week</div>
+              </div>
+            </div>
+            <div style={{ fontSize:9,color:t.textFaint,marginTop:8 }}>Logged from your daily entries · {walkDaysLogged}/7 days logged</div>
+          </div>
+
+          {/* motivation weekly rollup */}
+          {(()=>{
+            const motis = week.days.map(d=>d.motivation).filter(Boolean);
+            const cond = getMotivationCondition(motis);
+            if (motis.length===0) return null;
+            return (
+              <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:8 }}>
+                <span style={{ fontSize:14 }}>💫</span>
+                {motis.length>=3&&cond
+                  ?<span style={{ fontSize:11,color:cond.color,fontWeight:600 }}>{cond.label}</span>
+                  :<span style={{ fontSize:10,color:t.textMuted }}>Log {Math.max(0,3-motis.length)} more days for your weekly vibe</span>
+                }
+              </div>
+            );
+          })()}
+
+          {/* ratings rollup */}
+          {(()=>{
+            const keys = Object.keys(RATING_ICONS);
+            const anyLogged = keys.some(k=>week.days.some(d=>d[k]>0));
+            if (!anyLogged) return null;
+            return (
+              <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:12,padding:"12px 14px",marginBottom:12 }}>
+                <div style={{ fontSize:11,color:t.textMuted,fontWeight:600,marginBottom:8 }}>How you felt — auto-tracked</div>
+                <div style={{ display:"flex",gap:6 }}>
+                  {keys.map(k=>{
+                    const icons=RATING_ICONS[k];
+                    const vals=week.days.map(d=>d[k]).filter(v=>v>0);
+                    const avg=vals.length>0?(vals.reduce((a,b)=>a+b,0)/vals.length):null;
+                    return (
+                      <div key={k} style={{ flex:1,textAlign:"center",background:t.inputBg,borderRadius:8,padding:"8px 4px" }}>
+                        <div style={{ fontSize:14 }}>{icons.filled}</div>
+                        <div style={{ fontSize:13,fontWeight:700,color:avg!==null?icons.color:t.textFaint,marginTop:2 }}>{avg!==null?avg.toFixed(1):"–"}</div>
+                        <div style={{ fontSize:7,color:t.textFaint,textTransform:"uppercase",letterSpacing:"0.04em",marginTop:1 }}>{RATING_LABELS[k]}</div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-            {(()=>{ const motis=week.days.map(d=>d.motivation).filter(Boolean); const cond=getMotivationCondition(motis); return motis.length>=3&&cond?<div style={{ fontSize:11,color:cond.color,fontWeight:600,borderTop:"1px solid #2A2A32",paddingTop:8 }}>{cond.label}</div>:<div style={{ fontSize:10,color:"#444",borderTop:"1px solid #2A2A32",paddingTop:8 }}>Log motivation on {Math.max(0,3-motis.length)} more days to see your weekly vibe</div>; })()}
-          </div>
+              </div>
+            );
+          })()}
 
-          {/* rating + text fields */}
+          {/* text fields */}
           <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
             {CHECKIN_FIELDS.map(field=>(
-              <div key={field.key} style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:"13px 14px" }}>
-                <div style={{ fontSize:11,color:"#888",marginBottom:8,fontWeight:500 }}>{field.label}</div>
-                {field.type==="rating"
-                  ?<RatingInput value={week.checkin[field.key]} onChange={v=>updateCheckin(field.key,v)}/>
-                  :<input type={field.type} placeholder={field.placeholder} value={week.checkin[field.key]} onChange={e=>updateCheckin(field.key,e.target.value)} style={{ width:"100%",background:"#13131A",border:"1px solid #2A2A32",borderRadius:8,color:"#DDD",fontSize:13,padding:"8px 10px",outline:"none",boxSizing:"border-box",fontFamily:"inherit" }}/>
-                }
+              <div key={field.key} style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:12,padding:"13px 14px" }}>
+                <div style={{ fontSize:11,color:t.textMuted,marginBottom:8,fontWeight:500 }}>{field.label}</div>
+                <input type={field.type} placeholder={field.placeholder} value={week.checkin[field.key]} onChange={e=>updateCheckin(field.key,e.target.value)} style={{ width:"100%",background:t.inputBg,border:`1px solid ${t.inputBorder}`,borderRadius:8,color:t.textBody,fontSize:13,padding:"8px 10px",outline:"none",boxSizing:"border-box",fontFamily:"inherit" }}/>
               </div>
             ))}
           </div>
-          <button onClick={saveCheckin} style={{ width:"100%",marginTop:16,padding:13,borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",border:"none",background:`linear-gradient(135deg,${COLORS.accent},#F472B6)`,color:"#fff",letterSpacing:"0.02em" }}>Save Week {week.weekNum} Check-in ✓</button>
+          <button onClick={saveCheckin} style={{ width:"100%",marginTop:16,padding:13,borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",border:"none",background:`linear-gradient(135deg,${COLORS.accent},#EE6A4C)`,color:"#fff" }}>Save Week {week.weekNum} ✓</button>
         </div>
       )}
 
       {/* ══ PROGRESS ══ */}
       {activeView==="progress"&&(
-        <div style={{ padding:"16px 20px 32px" }}>
-          <div style={{ fontSize:13,color:"#666",lineHeight:1.6,marginBottom:16 }}>Your journey <span style={{ color:COLORS.accent }}>15 Jun → end of Oct</span>. Saved check-ins appear automatically.</div>
-          <div style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:14,padding:"14px 14px 10px",marginBottom:16 }}>
-            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-              <div style={{ fontSize:11,color:"#888",fontWeight:600 }}>Weight (kg)</div>
-              <div style={{ display:"flex",gap:10,fontSize:9,color:"#444" }}>
-                <span><span style={{ color:COLORS.accent }}>━</span> End</span>
-                <span><span style={{ color:COLORS.accent,opacity:0.5 }}>┅</span> Start</span>
-                <span><span style={{ color:"#34D399" }}>┅</span> 58kg</span>
+        <div style={{ padding:"14px 20px 28px" }}>
+          <div style={{ fontSize:12,color:t.textMuted,lineHeight:1.6,marginBottom:14 }}>Your journey <span style={{ color:COLORS.accent }}>15 Jun → end of Oct</span></div>
+
+          <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:14,padding:"14px 14px 10px",marginBottom:12 }}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
+              <div style={{ fontSize:11,color:t.textMuted,fontWeight:600 }}>Weight (kg)</div>
+              <div style={{ display:"flex",gap:10,fontSize:9,color:t.textFaint }}>
+                <span><span style={{ color:COLORS.accent }}>●</span> logged</span>
+                <span><span style={{ color:"#5FB84B" }}>┅</span> 58kg goal</span>
               </div>
             </div>
-            <WeightGraph allWeeks={allWeeks}/>
+            {(()=>{
+              const allLogged=[];
+              allWeeks.forEach(w=>w.days.forEach(d=>{ if(d.weight) allLogged.push(parseFloat(d.weight)); }));
+              if (allLogged.length===0) return null;
+              const current=allLogged[allLogged.length-1];
+              const toGoal=(current-58).toFixed(1);
+              return (
+                <div style={{ marginBottom:8 }}>
+                  <span style={{ fontSize:22,fontWeight:700,color:COLORS.accent }}>{current}</span>
+                  <span style={{ fontSize:11,color:t.textMuted }}> kg right now</span>
+                  {parseFloat(toGoal)>0&&<span style={{ fontSize:10,color:t.textMuted,marginLeft:6 }}>· {toGoal}kg to go</span>}
+                </div>
+              );
+            })()}
+            <WeightGraph allWeeks={allWeeks} t={t}/>
           </div>
-          <div style={{ fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10 }}>Week by week</div>
+
+          <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:14,padding:"14px 14px 10px",marginBottom:16 }}>
+            <div style={{ fontSize:11,color:t.textMuted,fontWeight:600,marginBottom:10 }}>📏 Waist (cm)</div>
+            <WaistGraph allWeeks={allWeeks} t={t}/>
+          </div>
+
+          <div style={{ fontSize:10,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10 }}>Week by week</div>
           {allWeeks.map((w,i)=>{
             if (!w.checkinDone) return (
-              <div key={i} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 14px",marginBottom:6,background:"#141418",border:"1px solid #1E1E22",borderRadius:10,opacity:0.35 }}>
-                <div style={{ fontSize:11,color:"#333",fontWeight:600,width:52 }}>Wk {w.weekNum}</div>
-                <div style={{ fontSize:10,color:"#333" }}>{fmtDate(getWeekDates(i)[0])} – {fmtDate(getWeekDates(i)[6])}</div>
-                <div style={{ marginLeft:"auto",fontSize:10,color:"#2A2A32" }}>not logged</div>
+              <div key={i} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 14px",marginBottom:6,background:t.cardAlt,border:`1px solid ${t.cardBorder}`,borderRadius:10,opacity:0.5 }}>
+                <div style={{ fontSize:11,color:t.textFaint,fontWeight:600,width:52 }}>Wk {w.weekNum}</div>
+                <div style={{ fontSize:10,color:t.textFaint }}>{fmtDate(getWeekDates(i)[0])} – {fmtDate(getWeekDates(i)[6])}</div>
+                <div style={{ marginLeft:"auto",fontSize:10,color:t.textFaint }}>not logged</div>
               </div>
             );
-            const diff=(w.checkin.weightStart&&w.checkin.weightEnd)?(parseFloat(w.checkin.weightEnd)-parseFloat(w.checkin.weightStart)).toFixed(1):null;
-            const diffColor=diff===null?"#888":parseFloat(diff)<0?"#34D399":parseFloat(diff)>0?"#F87171":"#888";
-            const daysCompleted=w.days.filter(d=>d.completed).length;
+            const wLogged = w.days.filter(d=>d.weight);
+            const wFirst = wLogged.length>0?parseFloat(wLogged[0].weight):null;
+            const wLast  = wLogged.length>0?parseFloat(wLogged[wLogged.length-1].weight):null;
+            const diff = (wFirst!==null&&wLast!==null&&wLogged.length>1)?(wLast-wFirst).toFixed(1):null;
+            const diffColor=diff===null?t.textMuted:parseFloat(diff)<0?"#5FB84B":parseFloat(diff)>0?"#E0584A":t.textMuted;
             const wGym=w.days.filter(d=>d.gymDay!=="none"&&d.completed).length;
             const wSkate=w.days.filter(d=>d.skate&&d.completed).length;
-            const wWalk=w.days.filter(d=>d.walk&&d.completed).length;
-            const wCond=getWeekCondition(wGym,wSkate,wWalk);
+            const wGoalDays=w.days.filter(d=>d.walkSteps&&parseInt(d.walkSteps)>=STEP_GOAL).length;
+            const wCond=getWeekCondition(wGym,wSkate,wGoalDays);
             const gymEx=w.days.reduce((s,d)=>s+Object.values(d.gymDone||{}).filter(Boolean).length,0);
             const totSteps=w.days.reduce((s,d)=>s+(d.walkSteps?parseInt(d.walkSteps):0),0);
             const totSkMin=w.days.reduce((s,d)=>s+(d.skateMinutes?parseInt(d.skateMinutes):0),0);
             const totSkCal=w.days.reduce((s,d)=>s+(d.skateCalories?parseInt(d.skateCalories):0),0);
             const motis=w.days.map(d=>d.motivation).filter(Boolean);
             const mCond=getMotivationCondition(motis);
+            const ratingVals=Object.keys(RATING_ICONS).flatMap(k=>w.days.map(d=>d[k]).filter(v=>v>0));
+            const ratingAvg = ratingVals.length>0 ? (ratingVals.reduce((a,b)=>a+b,0)/ratingVals.length) : null;
             return (
-              <div key={i} style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:"12px 14px",marginBottom:8 }}>
+              <div key={i} style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:12,padding:"12px 14px",marginBottom:8 }}>
                 <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8 }}>
-                  <div><span style={{ fontSize:13,fontWeight:700,color:COLORS.accent }}>Week {w.weekNum}</span><span style={{ fontSize:10,color:"#555",marginLeft:8 }}>{fmtDate(getWeekDates(i)[0])} – {fmtDate(getWeekDates(i)[6])}</span></div>
-                  <div style={{ fontSize:10,color:"#555" }}>{daysCompleted}/7 days ✓</div>
+                  <div><span style={{ fontSize:13,fontWeight:700,color:COLORS.accent }}>Week {w.weekNum}</span><span style={{ fontSize:10,color:t.textMuted,marginLeft:8 }}>{fmtDate(getWeekDates(i)[0])} – {fmtDate(getWeekDates(i)[6])}</span></div>
+                  <button onClick={()=>exportWeek(w, getWeekDates(i))} style={{ background:"none",border:"none",color:t.textMuted,cursor:"pointer",fontSize:13 }}>⬇</button>
                 </div>
-                {(w.checkin.weightStart||w.checkin.weightEnd)&&(
-                  <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
-                    <span style={{ fontSize:11,color:"#555" }}>⚖️</span>
-                    {w.checkin.weightStart&&<span style={{ fontSize:13,color:"#888" }}>{w.checkin.weightStart} kg</span>}
-                    {w.checkin.weightStart&&w.checkin.weightEnd&&<span style={{ fontSize:10,color:"#333" }}>→</span>}
-                    {w.checkin.weightEnd&&<span style={{ fontSize:14,fontWeight:700,color:COLORS.accent }}>{w.checkin.weightEnd} kg</span>}
+                {wLogged.length>0&&(
+                  <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,flexWrap:"wrap" }}>
+                    <span style={{ fontSize:11,color:t.textMuted }}>⚖️</span>
+                    <span style={{ fontSize:13,color:t.textBody }}>{wFirst} kg</span>
+                    {wLogged.length>1&&<><span style={{ fontSize:10,color:t.textFaint }}>→</span><span style={{ fontSize:14,fontWeight:700,color:COLORS.accent }}>{wLast} kg</span></>}
                     {diff!==null&&<span style={{ fontSize:11,fontWeight:700,color:diffColor,background:diffColor+"18",borderRadius:6,padding:"2px 6px" }}>{parseFloat(diff)>0?"+":""}{diff}</span>}
-                    {w.checkin.waist&&<span style={{ fontSize:11,color:"#555",marginLeft:4 }}>· 📏 {w.checkin.waist}cm</span>}
+                    {w.checkin.waist&&<span style={{ fontSize:11,color:t.textMuted }}>· 📏 {w.checkin.waist}cm</span>}
                   </div>
                 )}
-                {(wGym+wSkate+wWalk)>0&&(
-                  <div style={{ background:"#13131A",borderRadius:8,padding:"8px 10px",marginBottom:8 }}>
+                {(wGym+wSkate+wGoalDays+totSteps)>0&&(
+                  <div style={{ background:t.inputBg,borderRadius:8,padding:"8px 10px",marginBottom:8 }}>
                     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
-                      <div style={{ fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em" }}>Activities</div>
+                      <div style={{ fontSize:9,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.08em" }}>Activities</div>
                       {wCond&&<span style={{ fontSize:9,fontWeight:700,color:wCond.color }}>{wCond.label}</span>}
                     </div>
                     <div style={{ display:"flex",flexDirection:"column",gap:3 }}>
                       {wGym>0&&<div style={{ fontSize:10,color:COLORS.gym }}>🏋️ {wGym}× gym{gymEx>0?` · ${gymEx} exercises`:""}</div>}
                       {wSkate>0&&<div style={{ fontSize:10,color:COLORS.skate }}>🛼 {wSkate}× skate{totSkMin>0?` · ${totSkMin} min`:""}{totSkCal>0?` · ${totSkCal} kcal`:""}</div>}
-                      {wWalk>0&&<div style={{ fontSize:10,color:COLORS.walk }}>🚶 {wWalk}× walk{totSteps>0?` · ${totSteps.toLocaleString()} steps`:""}</div>}
+                      {totSteps>0&&<div style={{ fontSize:10,color:COLORS.walk }}>🚶 {wGoalDays}/7 days hit goal · {totSteps.toLocaleString()} total steps</div>}
                     </div>
                   </div>
                 )}
-                {(w.checkin.energy||w.checkin.sleep||w.checkin.stress||w.checkin.moodStability||w.checkin.cravings)>0&&(
-                  <div style={{ display:"flex",gap:8,marginBottom:6,flexWrap:"wrap" }}>
-                    {[{l:"Energy",k:"energy"},{l:"Sleep",k:"sleep"},{l:"Stress",k:"stress"},{l:"Mood",k:"moodStability"},{l:"Cravings",k:"cravings"}].map(r=>w.checkin[r.k]>0&&(
-                      <div key={r.k} style={{ fontSize:10,color:"#555" }}>{r.l} <span style={{ color:COLORS.accent,fontWeight:700 }}>{w.checkin[r.k]}/5</span></div>
-                    ))}
+                {(ratingAvg!==null||motis.length>0)&&(
+                  <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:4,flexWrap:"wrap" }}>
+                    {ratingAvg!==null&&<span style={{ fontSize:10,color:t.textMuted }}>Wellbeing avg <span style={{ color:"#EE6A4C",fontWeight:700 }}>{ratingAvg.toFixed(1)}/5</span></span>}
+                    {mCond&&motis.length>=3&&<span style={{ fontSize:10,color:mCond.color }}>💫 {mCond.label}</span>}
                   </div>
                 )}
-                {motis.length>0&&<div style={{ fontSize:10,color:"#555",marginBottom:4 }}>💫 {motis.join(" ")}{mCond&&<span style={{ color:mCond.color,marginLeft:4 }}>· {mCond.label}</span>}</div>}
-                {w.checkin.win&&<div style={{ fontSize:11,color:"#888",marginBottom:2 }}>🏅 {w.checkin.win}</div>}
-                {w.checkin.improve&&<div style={{ fontSize:11,color:"#555" }}>💡 {w.checkin.improve}</div>}
+                {w.checkin.win&&<div style={{ fontSize:11,color:t.textBody,marginBottom:2 }}>🏅 {w.checkin.win}</div>}
+                {w.checkin.improve&&<div style={{ fontSize:11,color:t.textMuted }}>💡 {w.checkin.improve}</div>}
               </div>
             );
           })}
@@ -866,88 +1091,62 @@ function FitnessCalendar() {
 
       {/* ══ PULL UP ══ */}
       {activeView==="pullup"&&(
-        <div style={{ padding:"16px 20px 32px" }}>
-          <div style={{ fontSize:13,color:"#666",lineHeight:1.6,marginBottom:16 }}>Your pull up journey 💪 Tap a stage to expand it and see your week-by-week plan.</div>
-          {/* hero */}
-          <div style={{ background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:14,padding:20,marginBottom:16,textAlign:"center" }}>
-            <div style={{ fontSize:44,marginBottom:4 }}>{pullUpDone[3]?"🏆":pullUpDone[2]?"💪🏻":pullUpDone[1]?"🔥":pullUpDone[0]?"⚡":"🎯"}</div>
-            <div style={{ fontSize:22,fontWeight:700,color:COLORS.pullup }}>{pullUpDone.filter(Boolean).length}<span style={{ fontSize:14,color:"#444",fontWeight:400 }}>/4 stages</span></div>
-            <div style={{ fontSize:11,color:"#555",marginTop:2 }}>{pullUpDone[3]?"You did it!! So proud of you 🥹":pullUpDone[2]?"First pull up achieved! Build from here":pullUpDone[1]?"Hanging strong — negatives next!":pullUpDone[0]?"Foundation locked in — add dead hangs!":"First pull up goal · typically 8–12 weeks"}</div>
-            <div style={{ height:6,background:"#2A2A32",borderRadius:3,marginTop:14 }}>
-              <div style={{ height:"100%",borderRadius:3,background:`linear-gradient(90deg,${COLORS.pullup},#FBBF24)`,width:`${(pullUpDone.filter(Boolean).length/4)*100}%`,transition:"width 0.5s ease" }}/>
-            </div>
+        <div style={{ padding:"14px 20px 28px" }}>
+          <div style={{ fontSize:12,color:t.textMuted,lineHeight:1.6,marginBottom:14 }}>Your pull up journey 💪 Tap a stage to see your week-by-week plan.</div>
+          <div style={{ background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:14,padding:18,marginBottom:14,textAlign:"center" }}>
+            <div style={{ fontSize:40,marginBottom:4 }}>{pullUpDone[3]?"🏆":pullUpDone[2]?"💪🏻":pullUpDone[1]?"🔥":pullUpDone[0]?"⚡":"🎯"}</div>
+            <div style={{ fontSize:20,fontWeight:700,color:COLORS.pullup }}>{pullUpDone.filter(Boolean).length}<span style={{ fontSize:13,color:t.textFaint,fontWeight:400 }}>/4 stages</span></div>
+            <div style={{ fontSize:10,color:t.textMuted,marginTop:2 }}>{pullUpDone[3]?"You did it!! So proud of you 🥹":pullUpDone[2]?"First pull up achieved!":pullUpDone[1]?"Hanging strong — negatives next!":pullUpDone[0]?"Foundation locked in!":"Typically 8–12 weeks"}</div>
+            <div style={{ height:5,background:t.divider,borderRadius:3,marginTop:12 }}><div style={{ height:"100%",borderRadius:3,background:`linear-gradient(90deg,${COLORS.pullup},#E0B72E)`,width:`${(pullUpDone.filter(Boolean).length/4)*100}%` }}/></div>
           </div>
 
-          {/* stage cards */}
-          <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+          <div style={{ display:"flex",flexDirection:"column",gap:9 }}>
             {PULL_UP_STAGES.map((stage,i)=>{
               const done=pullUpDone[i],locked=i>0&&!pullUpDone[i-1],isOpen=pullUpOpen===i;
               const stageWeeks=PULLUP_WEEKLY.filter(w=>w.stage===i);
               const wksDone=stageWeeks.filter(sw=>pullUpWkDone[sw.week-1]).length;
               return (
-                <div key={i} style={{ background:done?"#1A1810":locked?"#141418":"#1A1A20",border:`1.5px solid ${done?stage.color+"60":isOpen?stage.color+"40":locked?"#1E1E22":"#2A2A32"}`,borderRadius:12,overflow:"hidden",opacity:locked?0.4:1,transition:"all 0.15s" }}>
-                  <div style={{ padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:locked?"default":"pointer" }} onClick={()=>!locked&&setPullUpOpen(isOpen?null:i)}>
-                    <div style={{ width:36,height:36,borderRadius:10,flexShrink:0,border:`2px solid ${done?stage.color:locked?"#2A2A32":"#3A3A42"}`,background:done?stage.color+"20":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:done?16:15,color:done?stage.color:"#444" }}>{done?"✓":["🪨","🧗","⬆️","🏆"][i]}</div>
+                <div key={i} style={{ background:done?stage.color+"15":locked?t.cardAlt:t.card,border:`1.5px solid ${done?stage.color+"60":isOpen?stage.color+"40":locked?t.cardBorder:t.cardBorder}`,borderRadius:12,overflow:"hidden",opacity:locked?0.45:1 }}>
+                  <div style={{ padding:"13px 16px",display:"flex",alignItems:"center",gap:12,cursor:locked?"default":"pointer" }} onClick={()=>!locked&&setPullUpOpen(isOpen?null:i)}>
+                    <div style={{ width:34,height:34,borderRadius:10,flexShrink:0,border:`2px solid ${done?stage.color:locked?t.cardBorder:t.textFaint}`,background:done?stage.color+"20":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:done?15:14,color:done?stage.color:t.textFaint }}>{done?"✓":["🪨","🧗","⬆️","🏆"][i]}</div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13,fontWeight:700,color:done?stage.color:locked?"#444":"#F1F0EE" }}>{stage.label}</div>
-                      <div style={{ fontSize:10,color:"#555",marginTop:1 }}>{stage.week} · {stage.sub}</div>
-                      {stageWeeks.length>0&&<div style={{ fontSize:9,color:done?stage.color:"#555",marginTop:2 }}>{wksDone}/{stageWeeks.length} weeks logged</div>}
+                      <div style={{ fontSize:13,fontWeight:700,color:done?stage.color:locked?t.textFaint:t.textPrimary }}>{stage.label}</div>
+                      <div style={{ fontSize:10,color:t.textMuted,marginTop:1 }}>{stage.week}{stageWeeks.length>0&&` · ${wksDone}/${stageWeeks.length} weeks logged`}</div>
                     </div>
-                    {locked&&<span style={{ fontSize:11,color:"#333" }}>🔒</span>}
-                    {!locked&&<span style={{ fontSize:14,color:"#444",transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(90deg)":"rotate(0deg)" }}>›</span>}
+                    {locked&&<span style={{ fontSize:11,color:t.textFaint }}>🔒</span>}
+                    {!locked&&<span style={{ fontSize:13,color:t.textFaint,display:"inline-block",transform:isOpen?"rotate(90deg)":"rotate(0deg)" }}>›</span>}
                   </div>
 
                   {isOpen&&!locked&&(
-                    <div style={{ borderTop:"1px solid #2A2A32",padding:"14px 16px" }}>
-                      {/* how to */}
-                      <div style={{ marginBottom:14 }}>
-                        <div style={{ fontSize:9,color:stage.color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:6 }}>How to do it</div>
-                        <div style={{ fontSize:12,color:"#888",lineHeight:1.7 }}>{stage.howTo}</div>
+                    <div style={{ borderTop:`1px solid ${t.cardBorder}`,padding:"13px 16px" }}>
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:9,color:stage.color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:5 }}>How to do it</div>
+                        <div style={{ fontSize:12,color:t.textMuted,lineHeight:1.6 }}>{stage.howTo}</div>
                       </div>
-                      {/* general schedule */}
-                      <div style={{ marginBottom:14 }}>
-                        <div style={{ fontSize:9,color:stage.color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:8 }}>General schedule</div>
-                        <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-                          {stage.schedule.map((s,si)=>(
-                            <div key={si} style={{ display:"flex",gap:10,background:"#13131A",borderRadius:8,padding:"8px 10px" }}>
-                              <span style={{ fontSize:9,color:stage.color,fontWeight:700,flexShrink:0,paddingTop:1,minWidth:60 }}>{s.day}</span>
-                              <span style={{ fontSize:11,color:"#AAA",lineHeight:1.5 }}>{s.task}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {/* milestone */}
-                      <div style={{ background:stage.color+"10",border:`1px solid ${stage.color}30`,borderRadius:8,padding:"10px 12px",marginBottom:14 }}>
-                        <div style={{ fontSize:9,color:stage.color,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4 }}>🎯 Milestone to unlock next stage</div>
-                        <div style={{ fontSize:11,color:"#AAA",lineHeight:1.5 }}>{stage.milestone}</div>
+                      <div style={{ background:stage.color+"10",border:`1px solid ${stage.color}30`,borderRadius:8,padding:"9px 11px",marginBottom:12 }}>
+                        <div style={{ fontSize:9,color:stage.color,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>🎯 Milestone</div>
+                        <div style={{ fontSize:11,color:t.textBody,lineHeight:1.5 }}>{stage.milestone}</div>
                       </div>
 
-                      {/* week by week */}
                       {stageWeeks.length>0&&(
-                        <div style={{ marginBottom:14 }}>
-                          <div style={{ fontSize:9,color:stage.color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:8 }}>Week by week ({wksDone}/{stageWeeks.length} done)</div>
-                          <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+                        <div style={{ marginBottom:12 }}>
+                          <div style={{ fontSize:9,color:stage.color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7 }}>Week by week</div>
+                          <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
                             {stageWeeks.map((sw)=>{
-                              const wkOpen=pullUpWkOpen===sw.week;
-                              const wkDone=pullUpWkDone[sw.week-1];
+                              const wkOpen=pullUpWkOpen===sw.week, wkDone=pullUpWkDone[sw.week-1];
                               return (
-                                <div key={sw.week} style={{ background:wkDone?"#141810":"#13131A",border:`1px solid ${wkDone?stage.color+"40":"#2A2A32"}`,borderRadius:8,overflow:"hidden" }}>
-                                  <div style={{ display:"flex",alignItems:"center",gap:8,padding:"9px 10px" }}>
-                                    <div onClick={e=>{e.stopPropagation();setPullUpWkDone(prev=>{const n=[...prev];n[sw.week-1]=!n[sw.week-1];return n;})}} style={{ width:20,height:20,borderRadius:6,flexShrink:0,border:`1.5px solid ${wkDone?stage.color:"#3A3A42"}`,background:wkDone?stage.color+"20":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:wkDone?stage.color:"#555",cursor:"pointer" }}>{wkDone?"✓":""}</div>
-                                    <span style={{ fontSize:11,fontWeight:600,color:wkDone?stage.color:"#AAA",flex:1,cursor:"pointer" }} onClick={()=>setPullUpWkOpen(wkOpen?null:sw.week)}>Week {sw.week}</span>
-                                    <span style={{ fontSize:11,color:"#444",cursor:"pointer" }} onClick={()=>setPullUpWkOpen(wkOpen?null:sw.week)}>{wkOpen?"▾":"▸"}</span>
+                                <div key={sw.week} style={{ background:wkDone?stage.color+"12":t.inputBg,border:`1px solid ${wkDone?stage.color+"40":t.cardBorder}`,borderRadius:8,overflow:"hidden" }}>
+                                  <div style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 10px" }}>
+                                    <div onClick={e=>{e.stopPropagation();setPullUpWkDone(prev=>{const n=[...prev];n[sw.week-1]=!n[sw.week-1];return n;})}} style={{ width:18,height:18,borderRadius:6,flexShrink:0,border:`1.5px solid ${wkDone?stage.color:t.textFaint}`,background:wkDone?stage.color+"20":"transparent",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:wkDone?stage.color:t.textMuted,cursor:"pointer" }}>{wkDone?"✓":""}</div>
+                                    <span style={{ fontSize:11,fontWeight:600,color:wkDone?stage.color:t.textBody,flex:1,cursor:"pointer" }} onClick={()=>setPullUpWkOpen(wkOpen?null:sw.week)}>Week {sw.week}</span>
+                                    <span style={{ fontSize:10,color:t.textFaint,cursor:"pointer" }} onClick={()=>setPullUpWkOpen(wkOpen?null:sw.week)}>{wkOpen?"▾":"▸"}</span>
                                   </div>
                                   {wkOpen&&(
-                                    <div style={{ borderTop:"1px solid #1E1E28",padding:"10px 10px 12px" }}>
-                                      <div style={{ display:"flex",flexDirection:"column",gap:5,marginBottom:10 }}>
-                                        {sw.targets.map((t,ti)=>(
-                                          <div key={ti} style={{ display:"flex",gap:6,alignItems:"flex-start" }}>
-                                            <span style={{ color:stage.color,fontSize:10,flexShrink:0,marginTop:1 }}>•</span>
-                                            <span style={{ fontSize:11,color:"#888",lineHeight:1.5 }}>{t}</span>
-                                          </div>
-                                        ))}
+                                    <div style={{ borderTop:`1px solid ${t.cardBorder}`,padding:"9px 10px 11px" }}>
+                                      <div style={{ display:"flex",flexDirection:"column",gap:4,marginBottom:8 }}>
+                                        {sw.targets.map((tg,ti)=>(<div key={ti} style={{ display:"flex",gap:6,alignItems:"flex-start" }}><span style={{ color:stage.color,fontSize:9,flexShrink:0,marginTop:1 }}>•</span><span style={{ fontSize:11,color:t.textMuted,lineHeight:1.5 }}>{tg}</span></div>))}
                                       </div>
-                                      <textarea placeholder="How did this week go? Hang time, reps, how it felt..." value={pullUpWkNotes[sw.week-1]} onChange={e=>{const n=[...pullUpWkNotes];n[sw.week-1]=e.target.value;setPullUpWkNotes(n);}} style={{ width:"100%",minHeight:52,background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:6,color:"#AAA",fontSize:11,padding:"7px 9px",resize:"none",outline:"none",boxSizing:"border-box",fontFamily:"inherit",lineHeight:1.5 }}/>
+                                      <textarea placeholder="How did this week go?..." value={pullUpWkNotes[sw.week-1]} onChange={e=>{const n=[...pullUpWkNotes];n[sw.week-1]=e.target.value;setPullUpWkNotes(n);}} style={{ width:"100%",minHeight:44,background:t.card,border:`1px solid ${t.cardBorder}`,borderRadius:6,color:t.textBody,fontSize:11,padding:"7px 9px",resize:"none",outline:"none",boxSizing:"border-box",fontFamily:"inherit",lineHeight:1.5 }}/>
                                     </div>
                                   )}
                                 </div>
@@ -957,30 +1156,16 @@ function FitnessCalendar() {
                         </div>
                       )}
 
-                      {/* stage notes */}
-                      <div style={{ marginBottom:14 }}>
-                        <div style={{ fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6 }}>Stage notes</div>
-                        <textarea placeholder="Overall notes for this stage..." value={pullUpNotes[i]} onChange={e=>{const n=[...pullUpNotes];n[i]=e.target.value;setPullUpNotes(n);}} style={{ width:"100%",minHeight:64,background:"#13131A",border:"1px solid #2A2A32",borderRadius:8,color:"#AAA",fontSize:12,padding:"8px 10px",resize:"none",outline:"none",boxSizing:"border-box",fontFamily:"inherit",lineHeight:1.5 }}/>
+                      <div style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:9,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5 }}>Stage notes</div>
+                        <textarea placeholder="Overall notes..." value={pullUpNotes[i]} onChange={e=>{const n=[...pullUpNotes];n[i]=e.target.value;setPullUpNotes(n);}} style={{ width:"100%",minHeight:52,background:t.inputBg,border:`1px solid ${t.inputBorder}`,borderRadius:8,color:t.textBody,fontSize:12,padding:"8px 10px",resize:"none",outline:"none",boxSizing:"border-box",fontFamily:"inherit",lineHeight:1.5 }}/>
                       </div>
-                      <button onClick={()=>setPullUpDone(prev=>{const n=[...prev];n[i]=!n[i];return n;})} style={{ width:"100%",padding:"10px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",border:`1.5px solid ${done?stage.color:"#3A3A42"}`,background:done?stage.color+"20":"#1E1E28",color:done?stage.color:"#666",transition:"all 0.15s" }}>{done?`✓ Stage ${i+1} Complete! Tap to undo`:`Mark Stage ${i+1} as Complete`}</button>
+                      <button onClick={()=>setPullUpDone(prev=>{const n=[...prev];n[i]=!n[i];return n;})} style={{ width:"100%",padding:"10px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",border:`1.5px solid ${done?stage.color:t.cardBorder}`,background:done?stage.color+"20":t.inputBg,color:done?stage.color:t.textMuted }}>{done?`✓ Stage ${i+1} Complete!`:`Mark Stage ${i+1} Complete`}</button>
                     </div>
                   )}
                 </div>
               );
             })}
-          </div>
-
-          {/* tips */}
-          <div style={{ marginTop:16,background:"#1A1A20",border:"1px solid #2A2A32",borderRadius:12,padding:"14px 16px" }}>
-            <div style={{ fontSize:10,color:COLORS.pullup,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:10 }}>Always remember 💜</div>
-            <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-              {[{icon:"🏋️",text:"Dead hangs + negatives are on every Day B workout"},{icon:"📈",text:"Lat pulldown is your #1 builder — pull to chest, lower slowly"},{icon:"🛼",text:"Skating builds core and leg drive which helps pull ups too!"},{icon:"😴",text:"Rest and protein are when you actually get stronger"},{icon:"✨",text:"One day it just clicks — trust the process"}].map((t,i)=>(
-                <div key={i} style={{ display:"flex",gap:8,alignItems:"flex-start" }}>
-                  <span style={{ fontSize:13,flexShrink:0 }}>{t.icon}</span>
-                  <span style={{ fontSize:12,color:"#666",lineHeight:1.5 }}>{t.text}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}
